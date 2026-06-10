@@ -1,0 +1,38 @@
+name: Build Windows Portable
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate assets
+        run: npm run check:assets
+
+      - name: Package portable EXE
+        run: npm run package:win
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 暖暖猪-桌面宠物
+          path: dist/暖暖猪-桌面宠物.exe
