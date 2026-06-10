@@ -2,6 +2,8 @@
 
 暖暖猪是一个 Windows 桌面电子宠物。它基于 Electron 打包，内置自定义宠物精灵图，不依赖 Codex App，下载后双击即可运行。
 
+![暖暖猪动画预览](media/nuannuan-pig-animation-preview.gif)
+
 ## 下载 EXE
 
 普通用户请到 GitHub Releases 下载最新版本：
@@ -131,11 +133,25 @@ npm run package:win
 dist/暖暖猪-桌面宠物.exe
 ```
 
+导出动画预览 GIF 和 MP4：
+
+```bash
+npm run export:preview
+```
+
+预览文件会生成到：
+
+```text
+media/nuannuan-pig-animation-preview.gif
+media/nuannuan-pig-animation-preview.mp4
+```
+
 ## 项目结构
 
 - `src/main.js`：Electron 主进程，负责透明窗口、托盘、拖拽、配置持久化。
 - `src/renderer/`：Canvas 渲染和宠物动画控制。
 - `assets/`：内置宠物配置、精灵图和托盘图标。
+- `media/`：动画预览 GIF/MP4。
 - `scripts/check-assets.js`：资源尺寸和配置校验。
 
 ## 许可证

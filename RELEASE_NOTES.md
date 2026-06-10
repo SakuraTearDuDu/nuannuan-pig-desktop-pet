@@ -17,6 +17,8 @@
 
 - `NuannuanPig-DesktopPet.exe`：直接运行版。
 - `NuannuanPig-DesktopPet-v1.0.0-win-x64.zip`：解压后得到中文文件名 `暖暖猪-桌面宠物.exe`。
+- `nuannuan-pig-animation-preview.gif`：全部动作 GIF 预览。
+- `nuannuan-pig-animation-preview.mp4`：全部动作短视频预览。
 
 ## 已知说明
 

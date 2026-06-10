@@ -9,6 +9,7 @@
   "scripts": {
     "start": "electron .",
     "check:assets": "node scripts/check-assets.js",
+    "export:preview": "python scripts/export-preview-media.py",
     "smoke": "set DUDU_PET_SMOKE_TEST=1&& electron .",
     "package:win": "electron-builder --win portable --x64"
   },
