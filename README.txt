@@ -1,9 +1,10 @@
 暖暖猪-桌面宠物 便携版
 
 下载与运行：
-1. 下载 暖暖猪-桌面宠物.exe。
-2. 双击运行，不需要安装 Codex App，也不需要复制任何宠物资源文件。
-3. 如果 Windows SmartScreen 提示“Windows 已保护你的电脑”，点击“更多信息”，再点击“仍要运行”。
+1. 从 GitHub Release 下载 NuannuanPig-DesktopPet.exe，或下载 NuannuanPig-DesktopPet-v1.0.0-win-x64.zip。
+2. 如果下载 ZIP，先解压，里面是 暖暖猪-桌面宠物.exe。
+3. 双击 EXE 运行，不需要安装 Codex App，也不需要复制任何宠物资源文件。
+4. 如果 Windows SmartScreen 提示“Windows 已保护你的电脑”，点击“更多信息”，再点击“仍要运行”。
 
 基本操作：
 - 单击暖暖猪：挥手。
@@ -24,7 +25,7 @@
 请右键暖暖猪或系统托盘图标，然后选择“退出暖暖猪-桌面宠物”。
 
 卸载方式：
-本程序是便携版。删除 暖暖猪-桌面宠物.exe 即可。
+本程序是便携版。删除下载的 EXE 或解压出的 暖暖猪-桌面宠物.exe 即可。
 如果要清除位置和缩放等设置，可以删除：
 %APPDATA%\暖暖猪-桌面宠物\settings.json
 

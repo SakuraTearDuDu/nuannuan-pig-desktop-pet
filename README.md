@@ -7,14 +7,17 @@
 普通用户请到 GitHub Releases 下载最新版本：
 
 - [最新版本 Releases](https://github.com/SakuraTearDuDu/nuannuan-pig-desktop-pet/releases/latest)
-- 下载附件：`暖暖猪-桌面宠物.exe`
+- 直接运行版：`NuannuanPig-DesktopPet.exe`
+- 中文文件名压缩包：`NuannuanPig-DesktopPet-v1.0.0-win-x64.zip`
 
 当前版本仅支持 Windows x64。程序未做代码签名，首次运行时 Windows SmartScreen 可能提示风险，这是未签名个人项目的常见提示。
 
+说明：GitHub Release 对中文附件文件名的下载链接兼容性不好，所以直接下载的 EXE 使用英文文件名。它和本地的 `暖暖猪-桌面宠物.exe` 是同一个程序；如果希望得到中文文件名，请下载 ZIP，解压后里面就是 `暖暖猪-桌面宠物.exe`。
+
 ## 第一次运行
 
-1. 下载 `暖暖猪-桌面宠物.exe`。
-2. 双击运行。
+1. 下载 `NuannuanPig-DesktopPet.exe`，或下载 ZIP 后解压出 `暖暖猪-桌面宠物.exe`。
+2. 双击 EXE 运行。
 3. 如果 Windows 出现“Windows 已保护你的电脑”：
    - 点击“更多信息”。
    - 点击“仍要运行”。
@@ -70,7 +73,7 @@ Windows 版配置通常保存在：
 卸载：
 
 - 本项目是便携版，没有安装向导。
-- 删除 `暖暖猪-桌面宠物.exe` 即可。
+- 删除下载的 EXE 或解压出的 `暖暖猪-桌面宠物.exe` 即可。
 - 如需清除用户设置，再删除 `%APPDATA%\暖暖猪-桌面宠物\settings.json`。
 
 ## 常见问题

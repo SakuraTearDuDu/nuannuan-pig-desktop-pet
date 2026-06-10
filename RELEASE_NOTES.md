@@ -15,7 +15,8 @@
 
 请下载 Release 附件中的：
 
-- `暖暖猪-桌面宠物.exe`
+- `NuannuanPig-DesktopPet.exe`：直接运行版。
+- `NuannuanPig-DesktopPet-v1.0.0-win-x64.zip`：解压后得到中文文件名 `暖暖猪-桌面宠物.exe`。
 
 ## 已知说明
 
