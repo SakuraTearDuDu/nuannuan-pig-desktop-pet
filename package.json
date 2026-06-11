@@ -1,7 +1,7 @@
 {
   "name": "dudu-pet",
   "version": "1.0.0",
-  "description": "暖暖猪 desktop pet packaged as a portable Windows app.",
+  "description": "暖暖猪 desktop pet packaged with Electron.",
   "main": "src/main.js",
   "author": "暖暖猪-桌面宠物",
   "license": "MIT",
@@ -11,7 +11,8 @@
     "check:assets": "node scripts/check-assets.js",
     "export:preview": "python scripts/export-preview-media.py",
     "smoke": "set DUDU_PET_SMOKE_TEST=1&& electron .",
-    "package:win": "electron-builder --win portable --x64"
+    "package:win": "electron-builder --win portable --x64",
+    "package:mac": "electron-builder --mac dmg zip --universal"
   },
   "devDependencies": {
     "electron": "^37.2.6",
@@ -41,6 +42,25 @@
         }
       ],
       "icon": "build/icon.ico"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.entertainment",
+      "identity": null
     },
     "portable": {
       "artifactName": "暖暖猪-桌面宠物.${ext}"

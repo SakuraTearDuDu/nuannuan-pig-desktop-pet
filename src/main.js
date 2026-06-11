@@ -292,6 +292,12 @@ function createTray() {
   updateTrayMenu();
 }
 
+function hideDockIconOnMac() {
+  if (process.platform === 'darwin' && app.dock) {
+    app.dock.hide();
+  }
+}
+
 function createWindow(pet) {
   const bounds = normalizeBounds(settings.bounds);
   mainWindow = new BrowserWindow({
@@ -421,6 +427,8 @@ ipcMain.handle('pet:show-context-menu', () => {
 });
 
 app.whenReady().then(() => {
+  hideDockIconOnMac();
+
   try {
     const pet = validateAssets();
     settings = readSettings();

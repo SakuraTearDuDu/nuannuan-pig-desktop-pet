@@ -1,3 +1,9 @@
+# Unreleased
+
+## 变更
+
+- 新增 macOS universal 未签名测试包构建配置，可通过 GitHub Actions 生成 `.dmg` 和 `.zip` 版 `.app`。
+
 # v1.0.0
 
 首个公开版本。
