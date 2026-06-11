@@ -2,7 +2,8 @@
 
 ## 变更
 
-- 新增 macOS universal 未签名测试包构建配置，可通过 GitHub Actions 生成 `.dmg` 和 `.zip` 版 `.app`。
+- 新增 macOS universal 未签名测试包构建配置，可生成 `.dmg` 和 `.zip` 版 `.app`。
+- 新增手动发布流程，可把 macOS 测试包上传到 GitHub Release 附件。
 
 # v1.0.0
 
@@ -23,10 +24,12 @@
 
 - `NuannuanPig-DesktopPet.exe`：直接运行版。
 - `NuannuanPig-DesktopPet-v1.0.0-win-x64.zip`：解压后得到中文文件名 `暖暖猪-桌面宠物.exe`。
+- `NuannuanPig-DesktopPet-v1.0.0-mac-universal.dmg`：macOS universal 测试版 DMG。
+- `NuannuanPig-DesktopPet-v1.0.0-mac-universal.zip`：macOS universal 测试版 `.app` 压缩包。
 - `nuannuan-pig-animation-preview.gif`：全部动作 GIF 预览。
 - `nuannuan-pig-animation-preview.mp4`：全部动作短视频预览。
 
 ## 已知说明
 
 - 当前版本未做代码签名，Windows SmartScreen 可能提示风险。
-- 当前版本仅支持 Windows x64。
+- macOS 测试包未做 Apple Developer ID 签名和公证，首次打开可能需要右键“打开”或到隐私与安全性里允许。

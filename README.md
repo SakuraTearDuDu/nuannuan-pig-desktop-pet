@@ -1,6 +1,6 @@
 # 暖暖猪-桌面宠物
 
-暖暖猪是一个基于 Electron 的桌面电子宠物。它内置自定义宠物精灵图，不依赖 Codex App，下载后即可运行。当前提供 Windows x64 便携 EXE，并支持通过 GitHub Actions 构建 macOS 未签名测试包。
+暖暖猪是一个基于 Electron 的桌面电子宠物。它内置自定义宠物精灵图，不依赖 Codex App，下载后即可运行。当前提供 Windows x64 便携 EXE，并提供 macOS universal 未签名测试包。
 
 ![暖暖猪动画预览](media/nuannuan-pig-animation-preview.gif)
 
@@ -18,10 +18,12 @@ Windows 版程序未做代码签名，首次运行时 Windows SmartScreen 可能
 
 ## macOS 测试包
 
-macOS 版用于小范围测试。请在 GitHub Actions 的 `Build Desktop Packages` 工作流里下载 `暖暖猪-桌面宠物-macos-universal` artifact，里面包含：
+macOS 版用于小范围测试。普通用户请到 GitHub Releases 下载：
 
-- `暖暖猪-桌面宠物.dmg`
-- `暖暖猪-桌面宠物.zip`
+- DMG 安装包：`NuannuanPig-DesktopPet-v1.0.0-mac-universal.dmg`
+- `.app` 压缩包：`NuannuanPig-DesktopPet-v1.0.0-mac-universal.zip`
+
+说明：macOS 的 `.app` 本质上是一个目录包，GitHub Release 不能像普通单文件那样直接上传裸 `.app`。如果需要 `.app`，请下载 ZIP，解压后里面就是可点击运行的 `暖暖猪-桌面宠物.app`。
 
 macOS 测试包未做 Apple Developer ID 签名和公证。首次打开时，如果系统提示无法验证开发者，可以右键点击 `.app` 选择“打开”，或到“系统设置 > 隐私与安全性”里允许打开。
 

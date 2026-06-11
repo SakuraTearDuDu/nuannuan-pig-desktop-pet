@@ -7,6 +7,20 @@ on:
       - master
   pull_request:
   workflow_dispatch:
+    inputs:
+      upload_release:
+        description: Upload macOS DMG and app ZIP to a GitHub Release
+        required: false
+        default: false
+        type: boolean
+      release_tag:
+        description: Release tag to upload macOS assets to
+        required: false
+        default: v1.0.0
+        type: string
+
+permissions:
+  contents: read
 
 jobs:
   build-windows:
@@ -39,6 +53,8 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -68,3 +84,14 @@ jobs:
           path: |
             dist/*.dmg
             dist/*.zip
+
+      - name: Upload macOS assets to release
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_release == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          mkdir -p release-assets
+          cp "dist/暖暖猪-桌面宠物.dmg" "release-assets/NuannuanPig-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
+          cp "dist/暖暖猪-桌面宠物.zip" "release-assets/NuannuanPig-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
+          gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber

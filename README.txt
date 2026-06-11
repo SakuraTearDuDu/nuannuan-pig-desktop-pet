@@ -7,9 +7,10 @@
 4. 如果 Windows SmartScreen 提示“Windows 已保护你的电脑”，点击“更多信息”，再点击“仍要运行”。
 
 macOS 测试版：
-1. 在 GitHub Actions 的 Build Desktop Packages 工作流下载 暖暖猪-桌面宠物-macos-universal artifact。
-2. artifact 中包含 暖暖猪-桌面宠物.dmg 和 ZIP 版 .app。
-3. macOS 测试包未做 Apple Developer ID 签名和公证；首次打开如果提示无法验证开发者，可以右键点击 .app 选择“打开”，或到“系统设置 > 隐私与安全性”里允许打开。
+1. 从 GitHub Release 下载 NuannuanPig-DesktopPet-v1.0.0-mac-universal.dmg，或下载 NuannuanPig-DesktopPet-v1.0.0-mac-universal.zip。
+2. 如果下载 ZIP，先解压，里面是可点击运行的 暖暖猪-桌面宠物.app。
+3. macOS 的 .app 本质上是目录包，所以 Release 里以 DMG 或 ZIP 形式分发。
+4. macOS 测试包未做 Apple Developer ID 签名和公证；首次打开如果提示无法验证开发者，可以右键点击 .app 选择“打开”，或到“系统设置 > 隐私与安全性”里允许打开。
 
 基本操作：
 - 单击暖暖猪：挥手。
@@ -38,6 +39,6 @@ macOS 配置通常保存在：
 
 说明：
 - 当前 Windows Release 提供 Windows x64 便携版。
-- 仓库已配置 macOS universal 未签名测试包构建。
+- Release 提供 macOS universal 未签名测试包。
 - 当前版本未做代码签名，Windows SmartScreen 或 macOS Gatekeeper 可能提示风险。
 - 本程序会记住上次位置、缩放比例、置顶状态和隐藏状态。
