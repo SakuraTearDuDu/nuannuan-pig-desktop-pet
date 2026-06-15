@@ -95,3 +95,47 @@ jobs:
           cp "dist/暖暖猪-桌面宠物.dmg" "release-assets/NuannuanPig-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
           cp "dist/暖暖猪-桌面宠物.zip" "release-assets/NuannuanPig-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
           gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
+
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - eb_arch: x64
+            deb_arch: amd64
+          - eb_arch: arm64
+            deb_arch: arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate assets
+        run: npm run check:assets
+
+      - name: Package Linux DEB
+        run: npm run package:linux -- --${{ matrix.eb_arch }}
+
+      - name: Normalize DEB artifact name
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          mkdir -p release-assets
+          deb_file="$(find dist -maxdepth 1 -name '*.deb' -print -quit)"
+          cp "$deb_file" "release-assets/NuannuanPig-DesktopPet-v${version}-linux-${{ matrix.deb_arch }}.deb"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 暖暖猪-桌面宠物-linux-${{ matrix.deb_arch }}
+          path: release-assets/*.deb

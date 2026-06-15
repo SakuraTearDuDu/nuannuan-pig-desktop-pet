@@ -12,7 +12,8 @@
     "export:preview": "python scripts/export-preview-media.py",
     "smoke": "set DUDU_PET_SMOKE_TEST=1&& electron .",
     "package:win": "electron-builder --win portable --x64 --publish never",
-    "package:mac": "electron-builder --mac dmg zip --universal --publish never"
+    "package:mac": "electron-builder --mac dmg zip --universal --publish never",
+    "package:linux": "electron-builder --linux deb --publish never"
   },
   "devDependencies": {
     "electron": "^37.2.6",
@@ -61,6 +62,19 @@
       "icon": "build/icon.icns",
       "category": "public.app-category.entertainment",
       "identity": null
+    },
+    "linux": {
+      "target": [
+        "deb"
+      ],
+      "icon": "assets/tray.png",
+      "category": "Utility",
+      "maintainer": "SakuraTearDuDu",
+      "artifactName": "NuannuanPig-DesktopPet-v${version}-linux-${arch}.${ext}"
+    },
+    "deb": {
+      "synopsis": "暖暖猪 desktop pet",
+      "description": "暖暖猪 is an Electron desktop pet for Windows, macOS, Linux, UOS, and Deepin."
     },
     "portable": {
       "artifactName": "暖暖猪-桌面宠物.${ext}"
