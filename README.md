@@ -10,7 +10,7 @@
 
 - [最新版本 Releases](https://github.com/SakuraTearDuDu/nuannuan-pig-desktop-pet/releases/latest)
 - 直接运行版：`NuannuanPig-DesktopPet.exe`
-- 中文文件名压缩包：`NuannuanPig-DesktopPet-v1.0.0-win-x64.zip`
+- 中文文件名压缩包：`NuannuanPig-DesktopPet-v2.0-win-x64.zip`
 
 Windows 版程序未做代码签名，首次运行时 Windows SmartScreen 可能提示风险，这是未签名个人项目的常见提示。
 
@@ -20,8 +20,8 @@ Windows 版程序未做代码签名，首次运行时 Windows SmartScreen 可能
 
 macOS 版用于小范围测试。普通用户请到 GitHub Releases 下载：
 
-- DMG 安装包：`NuannuanPig-DesktopPet-v1.0.0-mac-universal.dmg`
-- `.app` 压缩包：`NuannuanPig-DesktopPet-v1.0.0-mac-universal.zip`
+- DMG 安装包：`NuannuanPig-DesktopPet-v2.0-mac-universal.dmg`
+- `.app` 压缩包：`NuannuanPig-DesktopPet-v2.0-mac-universal.zip`
 
 说明：macOS 的 `.app` 本质上是一个目录包，GitHub Release 不能像普通单文件那样直接上传裸 `.app`。如果需要 `.app`，请下载 ZIP，解压后里面就是可点击运行的 `暖暖猪-桌面宠物.app`。
 
@@ -120,7 +120,7 @@ macOS 版配置通常保存在：
 
 ### 能在 macOS 或 Linux 运行吗？
 
-当前 Release 主要提供 Windows x64 便携 EXE。源码基于 Electron，仓库已配置 macOS universal 测试包构建；Linux 暂未配置打包目标。
+当前 Release 提供 Windows x64 便携版、macOS universal 未签名测试包，以及 Linux amd64/arm64 DEB 包。
 
 ## 开发
 

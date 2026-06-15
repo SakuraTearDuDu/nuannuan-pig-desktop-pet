@@ -16,7 +16,7 @@ on:
       release_tag:
         description: Release tag to upload macOS assets to
         required: false
-        default: v1.0.0
+        default: v2.0
         type: string
 
 permissions:
@@ -132,9 +132,10 @@ jobs:
         shell: bash
         run: |
           version="$(node -p "require('./package.json').version")"
+          release_version="${version%\.0}"
           mkdir -p release-assets
           deb_file="$(find dist -maxdepth 1 -name '*.deb' -print -quit)"
-          cp "$deb_file" "release-assets/NuannuanPig-DesktopPet-v${version}-linux-${{ matrix.deb_arch }}.deb"
+          cp "$deb_file" "release-assets/NuannuanPig-DesktopPet-v${release_version}-linux-${{ matrix.deb_arch }}.deb"
 
       - name: Inspect DEB package
         shell: bash

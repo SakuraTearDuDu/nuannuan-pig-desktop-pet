@@ -1,13 +1,13 @@
 暖暖猪-桌面宠物
 
 下载与运行：
-1. 从 GitHub Release 下载 NuannuanPig-DesktopPet.exe，或下载 NuannuanPig-DesktopPet-v1.0.0-win-x64.zip。
+1. 从 GitHub Release 下载 NuannuanPig-DesktopPet.exe，或下载 NuannuanPig-DesktopPet-v2.0-win-x64.zip。
 2. 如果下载 ZIP，先解压，里面是 暖暖猪-桌面宠物.exe。
 3. 双击 EXE 运行，不需要安装 Codex App，也不需要复制任何宠物资源文件。
 4. 如果 Windows SmartScreen 提示“Windows 已保护你的电脑”，点击“更多信息”，再点击“仍要运行”。
 
 macOS 测试版：
-1. 从 GitHub Release 下载 NuannuanPig-DesktopPet-v1.0.0-mac-universal.dmg，或下载 NuannuanPig-DesktopPet-v1.0.0-mac-universal.zip。
+1. 从 GitHub Release 下载 NuannuanPig-DesktopPet-v2.0-mac-universal.dmg，或下载 NuannuanPig-DesktopPet-v2.0-mac-universal.zip。
 2. 如果下载 ZIP，先解压，里面是可点击运行的 暖暖猪-桌面宠物.app。
 3. macOS 的 .app 本质上是目录包，所以 Release 里以 DMG 或 ZIP 形式分发。
 4. macOS 测试包未做 Apple Developer ID 签名和公证；首次打开如果提示无法验证开发者，可以右键点击 .app 选择“打开”，或到“系统设置 > 隐私与安全性”里允许打开。
@@ -43,7 +43,6 @@ macOS 配置通常保存在：
 ~/Library/Application Support/暖暖猪-桌面宠物/settings.json
 
 说明：
-- 当前 Windows Release 提供 Windows x64 便携版。
-- Release 提供 macOS universal 未签名测试包。
+- 当前 Release 提供 Windows x64 便携版、macOS universal 未签名测试包，以及 Linux amd64/arm64 DEB 包。
 - 当前版本未做代码签名，Windows SmartScreen 或 macOS Gatekeeper 可能提示风险。
 - 本程序会记住上次位置、缩放比例（包括自定义缩放）、难过等待时间、置顶状态和隐藏状态。

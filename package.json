@@ -1,6 +1,6 @@
 {
   "name": "dudu-pet",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "暖暖猪 desktop pet packaged with Electron.",
   "main": "src/main.js",
   "author": "暖暖猪-桌面宠物",

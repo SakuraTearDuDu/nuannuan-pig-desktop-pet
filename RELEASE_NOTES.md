@@ -1,9 +1,26 @@
-# Unreleased
+# v2.0
+
+交互优化版本。
 
 ## 变更
 
+- 新增连续三击鼠标左键触发跳跃，保留原有双击跳跃。
+- 新增无鼠标互动后进入难过状态，默认 5 分钟，并支持自定义 1 到 120 分钟。
+- 新增自定义缩放设置窗口，支持 50% 到 300%，按 5% 步进对齐。
+- 右键菜单和托盘菜单新增常用缩放档位、常用难过时间档位，以及自定义设置入口。
 - 新增 macOS universal 未签名测试包构建配置，可生成 `.dmg` 和 `.zip` 版 `.app`。
-- 新增手动发布流程，可把 macOS 测试包上传到 GitHub Release 附件。
+- 新增 Linux amd64/arm64 DEB 包构建和发布流程。
+
+## 下载
+
+请下载 Release 附件中的：
+
+- `NuannuanPig-DesktopPet.exe`：Windows x64 直接运行版。
+- `NuannuanPig-DesktopPet-v2.0-win-x64.zip`：Windows x64 压缩包，解压后得到中文文件名 `暖暖猪-桌面宠物.exe`。
+- `NuannuanPig-DesktopPet-v2.0-mac-universal.dmg`：macOS universal 测试版 DMG。
+- `NuannuanPig-DesktopPet-v2.0-mac-universal.zip`：macOS universal 测试版 `.app` 压缩包。
+- `NuannuanPig-DesktopPet-v2.0-linux-amd64.deb`：Linux amd64 DEB 包。
+- `NuannuanPig-DesktopPet-v2.0-linux-arm64.deb`：Linux arm64 DEB 包。
 
 # v1.0.0
 
