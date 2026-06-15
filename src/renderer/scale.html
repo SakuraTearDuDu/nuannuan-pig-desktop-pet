@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self';"
+    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义缩放</title>
+    <link rel="stylesheet" href="./scale.css">
+  </head>
+  <body>
+    <main class="panel">
+      <section class="hero" aria-labelledby="scale-title">
+        <p class="eyebrow">暖暖猪-桌面宠物</p>
+        <h1 id="scale-title">自定义缩放</h1>
+        <p class="summary">设置桌面宠物显示大小，范围 50% 到 300%。</p>
+      </section>
+
+      <form id="scale-form" class="scale-form">
+        <label class="field-label" for="scale-input">缩放比例</label>
+        <div class="number-row">
+          <input
+            id="scale-input"
+            class="scale-input"
+            type="number"
+            min="50"
+            max="300"
+            step="5"
+            inputmode="numeric"
+            autocomplete="off"
+          >
+          <span class="percent" aria-hidden="true">%</span>
+        </div>
+
+        <input
+          id="scale-slider"
+          class="scale-slider"
+          type="range"
+          min="50"
+          max="300"
+          step="5"
+          aria-label="缩放比例滑块"
+        >
+
+        <div id="preset-buttons" class="preset-buttons" aria-label="常用缩放比例"></div>
+
+        <p id="scale-hint" class="hint" aria-live="polite"></p>
+
+        <div class="actions">
+          <button id="reset-button" class="button secondary" type="button">恢复 100%</button>
+          <button class="button primary" type="submit">应用</button>
+          <button id="close-button" class="button ghost" type="button">关闭</button>
+        </div>
+      </form>
+    </main>
+    <script src="./scale.js"></script>
+  </body>
+</html>

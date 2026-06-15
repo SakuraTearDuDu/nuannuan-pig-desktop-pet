@@ -6,7 +6,14 @@ const CELL_WIDTH = 192;
 const CELL_HEIGHT = 208;
 const ATLAS_WIDTH = 1536;
 const ATLAS_HEIGHT = 1872;
-const SCALES = [0.75, 1, 1.25, 1.5];
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 3;
+const SCALE_STEP = 0.05;
+const PRESET_SCALES = [0.75, 1, 1.25, 1.5, 2];
+const MIN_SAD_TIMEOUT_MINUTES = 1;
+const MAX_SAD_TIMEOUT_MINUTES = 120;
+const SAD_TIMEOUT_STEP_MINUTES = 1;
+const PRESET_SAD_TIMEOUT_MINUTES = [1, 3, 5, 10, 15, 30];
 
 const ROOT_DIR = path.join(__dirname, '..');
 const ASSETS_DIR = path.join(ROOT_DIR, 'assets');
@@ -15,10 +22,37 @@ const SPRITESHEET_PATH = path.join(ASSETS_DIR, 'spritesheet.webp');
 const TRAY_ICON_PATH = path.join(ASSETS_DIR, 'tray.png');
 
 let mainWindow = null;
+let scaleSettingsWindow = null;
+let sadSettingsWindow = null;
 let tray = null;
 let settings = null;
 let dragState = null;
 let isQuitting = false;
+
+function normalizeScale(value, fallback = 1) {
+  const numeric = Number(value);
+  const scale = Number.isFinite(numeric) ? numeric : fallback;
+  const stepped = Math.round(scale / SCALE_STEP) * SCALE_STEP;
+  const clamped = Math.min(MAX_SCALE, Math.max(MIN_SCALE, stepped));
+  return Number(clamped.toFixed(2));
+}
+
+function formatScaleLabel(scale) {
+  return `${Math.round(normalizeScale(scale) * 100)}%`;
+}
+
+function normalizeSadTimeoutMinutes(value, fallback = 5) {
+  const numeric = Number(value);
+  const minutes = Number.isFinite(numeric) ? numeric : fallback;
+  const stepped = Math.round(minutes / SAD_TIMEOUT_STEP_MINUTES) * SAD_TIMEOUT_STEP_MINUTES;
+  const clamped = Math.min(MAX_SAD_TIMEOUT_MINUTES, Math.max(MIN_SAD_TIMEOUT_MINUTES, stepped));
+  return Number(clamped.toFixed(0));
+}
+
+function formatMinutesLabel(minutes) {
+  const normalized = normalizeSadTimeoutMinutes(minutes);
+  return `${normalized} 分钟`;
+}
 
 function getSettingsPath() {
   return path.join(app.getPath('userData'), 'settings.json');
@@ -36,6 +70,7 @@ function defaultBounds(scale) {
 function readSettings() {
   const defaults = {
     scale: 1,
+    sadTimeoutMinutes: 5,
     alwaysOnTop: true,
     hidden: false,
     bounds: null
@@ -43,11 +78,13 @@ function readSettings() {
 
   try {
     const parsed = JSON.parse(fs.readFileSync(getSettingsPath(), 'utf8'));
-    const scale = SCALES.includes(parsed.scale) ? parsed.scale : defaults.scale;
+    const scale = normalizeScale(parsed.scale, defaults.scale);
+    const sadTimeoutMinutes = normalizeSadTimeoutMinutes(parsed.sadTimeoutMinutes, defaults.sadTimeoutMinutes);
     return {
       ...defaults,
       ...parsed,
       scale,
+      sadTimeoutMinutes,
       alwaysOnTop: typeof parsed.alwaysOnTop === 'boolean' ? parsed.alwaysOnTop : defaults.alwaysOnTop,
       hidden: typeof parsed.hidden === 'boolean' ? parsed.hidden : defaults.hidden
     };
@@ -162,16 +199,36 @@ function normalizeBounds(bounds) {
   };
 }
 
-function emitSettings() {
-  if (!mainWindow || mainWindow.isDestroyed()) {
-    return;
-  }
-
-  mainWindow.webContents.send('settings-updated', {
+function settingsPayload() {
+  return {
     scale: settings.scale,
+    minScale: MIN_SCALE,
+    maxScale: MAX_SCALE,
+    scaleStep: SCALE_STEP,
+    presetScales: PRESET_SCALES,
+    sadTimeoutMinutes: settings.sadTimeoutMinutes,
+    minSadTimeoutMinutes: MIN_SAD_TIMEOUT_MINUTES,
+    maxSadTimeoutMinutes: MAX_SAD_TIMEOUT_MINUTES,
+    sadTimeoutStepMinutes: SAD_TIMEOUT_STEP_MINUTES,
+    presetSadTimeoutMinutes: PRESET_SAD_TIMEOUT_MINUTES,
     alwaysOnTop: settings.alwaysOnTop,
-    hidden: settings.hidden
-  });
+    hidden: settings.hidden,
+    cellWidth: CELL_WIDTH,
+    cellHeight: CELL_HEIGHT
+  };
+}
+
+function emitSettings() {
+  const payload = settingsPayload();
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('settings-updated', payload);
+  }
+  if (scaleSettingsWindow && !scaleSettingsWindow.isDestroyed()) {
+    scaleSettingsWindow.webContents.send('settings-updated', payload);
+  }
+  if (sadSettingsWindow && !sadSettingsWindow.isDestroyed()) {
+    sadSettingsWindow.webContents.send('settings-updated', payload);
+  }
 }
 
 function setWindowVisibility(visible) {
@@ -191,12 +248,13 @@ function setWindowVisibility(visible) {
 }
 
 function setScale(scale) {
-  if (!SCALES.includes(scale) || !mainWindow || mainWindow.isDestroyed()) {
-    return;
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return settingsPayload();
   }
 
+  const nextScale = normalizeScale(scale, settings.scale);
   const bounds = mainWindow.getBounds();
-  settings.scale = scale;
+  settings.scale = nextScale;
   const size = windowSize();
   mainWindow.setBounds({
     x: bounds.x,
@@ -207,6 +265,19 @@ function setScale(scale) {
   saveSettings();
   updateTrayMenu();
   emitSettings();
+  return settingsPayload();
+}
+
+function setSadTimeoutMinutes(minutes) {
+  if (!settings) {
+    return null;
+  }
+
+  settings.sadTimeoutMinutes = normalizeSadTimeoutMinutes(minutes, settings.sadTimeoutMinutes);
+  saveSettings();
+  updateTrayMenu();
+  emitSettings();
+  return settingsPayload();
 }
 
 function setAlwaysOnTop(enabled) {
@@ -251,12 +322,35 @@ function buildMenuTemplate(isTrayMenu) {
     { type: 'separator' },
     {
       label: '缩放',
-      submenu: SCALES.map(scale => ({
-        label: `${Math.round(scale * 100)}%`,
-        type: 'radio',
-        checked: settings.scale === scale,
-        click: () => setScale(scale)
-      }))
+      submenu: [
+        ...PRESET_SCALES.map(scale => ({
+          label: formatScaleLabel(scale),
+          type: 'radio',
+          checked: normalizeScale(settings.scale) === normalizeScale(scale),
+          click: () => setScale(scale)
+        })),
+        { type: 'separator' },
+        {
+          label: `自定义缩放...（当前 ${formatScaleLabel(settings.scale)}）`,
+          click: openScaleSettingsWindow
+        }
+      ]
+    },
+    {
+      label: '难过时间',
+      submenu: [
+        ...PRESET_SAD_TIMEOUT_MINUTES.map(minutes => ({
+          label: formatMinutesLabel(minutes),
+          type: 'radio',
+          checked: settings.sadTimeoutMinutes === normalizeSadTimeoutMinutes(minutes),
+          click: () => setSadTimeoutMinutes(minutes)
+        })),
+        { type: 'separator' },
+        {
+          label: `自定义难过时间...（当前 ${formatMinutesLabel(settings.sadTimeoutMinutes)}）`,
+          click: openSadSettingsWindow
+        }
+      ]
     },
     {
       label: '重置位置',
@@ -296,6 +390,82 @@ function hideDockIconOnMac() {
   if (process.platform === 'darwin' && app.dock) {
     app.dock.hide();
   }
+}
+
+function openScaleSettingsWindow() {
+  if (scaleSettingsWindow && !scaleSettingsWindow.isDestroyed()) {
+    scaleSettingsWindow.show();
+    scaleSettingsWindow.focus();
+    return;
+  }
+
+  scaleSettingsWindow = new BrowserWindow({
+    width: 420,
+    height: 560,
+    show: false,
+    resizable: false,
+    maximizable: false,
+    minimizable: false,
+    fullscreenable: false,
+    backgroundColor: '#fff7ed',
+    icon: TRAY_ICON_PATH,
+    title: '自定义缩放',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  });
+
+  scaleSettingsWindow.setMenu(null);
+  scaleSettingsWindow.loadFile(path.join(__dirname, 'renderer', 'scale.html'));
+  scaleSettingsWindow.once('ready-to-show', () => {
+    if (scaleSettingsWindow && !scaleSettingsWindow.isDestroyed()) {
+      scaleSettingsWindow.show();
+    }
+  });
+  scaleSettingsWindow.on('closed', () => {
+    scaleSettingsWindow = null;
+  });
+}
+
+function openSadSettingsWindow() {
+  if (sadSettingsWindow && !sadSettingsWindow.isDestroyed()) {
+    sadSettingsWindow.show();
+    sadSettingsWindow.focus();
+    return;
+  }
+
+  sadSettingsWindow = new BrowserWindow({
+    width: 420,
+    height: 560,
+    show: false,
+    resizable: false,
+    maximizable: false,
+    minimizable: false,
+    fullscreenable: false,
+    backgroundColor: '#fff7ed',
+    icon: TRAY_ICON_PATH,
+    title: '自定义难过时间',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  });
+
+  sadSettingsWindow.setMenu(null);
+  sadSettingsWindow.loadFile(path.join(__dirname, 'renderer', 'sad-timeout.html'));
+  sadSettingsWindow.once('ready-to-show', () => {
+    if (sadSettingsWindow && !sadSettingsWindow.isDestroyed()) {
+      sadSettingsWindow.show();
+    }
+  });
+  sadSettingsWindow.on('closed', () => {
+    sadSettingsWindow = null;
+  });
 }
 
 function createWindow(pet) {
@@ -372,13 +542,7 @@ function createWindow(pet) {
   mainWindow.on('resize', enforceWindowSize);
 }
 
-ipcMain.handle('pet:get-initial-state', () => ({
-  scale: settings.scale,
-  alwaysOnTop: settings.alwaysOnTop,
-  hidden: settings.hidden,
-  cellWidth: CELL_WIDTH,
-  cellHeight: CELL_HEIGHT
-}));
+ipcMain.handle('pet:get-initial-state', () => settingsPayload());
 
 ipcMain.handle('pet:begin-drag', (_event, point) => {
   if (!mainWindow || mainWindow.isDestroyed()) {
@@ -424,6 +588,22 @@ ipcMain.handle('pet:end-drag', () => {
 
 ipcMain.handle('pet:show-context-menu', () => {
   popupPetMenu();
+});
+
+ipcMain.handle('pet:set-scale', (_event, scale) => setScale(scale));
+
+ipcMain.handle('pet:close-scale-settings', () => {
+  if (scaleSettingsWindow && !scaleSettingsWindow.isDestroyed()) {
+    scaleSettingsWindow.close();
+  }
+});
+
+ipcMain.handle('pet:set-sad-timeout-minutes', (_event, minutes) => setSadTimeoutMinutes(minutes));
+
+ipcMain.handle('pet:close-sad-settings', () => {
+  if (sadSettingsWindow && !sadSettingsWindow.isDestroyed()) {
+    sadSettingsWindow.close();
+  }
 });
 
 app.whenReady().then(() => {

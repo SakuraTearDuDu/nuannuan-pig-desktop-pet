@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self';"
+    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义难过时间</title>
+    <link rel="stylesheet" href="./scale.css">
+  </head>
+  <body>
+    <main class="panel">
+      <section class="hero" aria-labelledby="timeout-title">
+        <p class="eyebrow">暖暖猪-桌面宠物</p>
+        <h1 id="timeout-title">自定义难过时间</h1>
+        <p class="summary">设置多久没有鼠标互动后，暖暖猪进入难过状态。</p>
+      </section>
+
+      <form id="timeout-form" class="scale-form">
+        <label class="field-label" for="timeout-input">无互动等待时间</label>
+        <div class="number-row">
+          <input
+            id="timeout-input"
+            class="scale-input"
+            type="number"
+            min="1"
+            max="120"
+            step="1"
+            inputmode="numeric"
+            autocomplete="off"
+          >
+          <span class="percent" aria-hidden="true">分钟</span>
+        </div>
+
+        <input
+          id="timeout-slider"
+          class="scale-slider"
+          type="range"
+          min="1"
+          max="120"
+          step="1"
+          aria-label="无互动等待时间滑块"
+        >
+
+        <div id="preset-buttons" class="preset-buttons" aria-label="常用等待时间"></div>
+
+        <p id="timeout-hint" class="hint" aria-live="polite"></p>
+
+        <div class="actions">
+          <button id="reset-button" class="button secondary" type="button">恢复 5 分钟</button>
+          <button class="button primary" type="submit">应用</button>
+          <button id="close-button" class="button ghost" type="button">关闭</button>
+        </div>
+      </form>
+    </main>
+    <script src="./sad-timeout.js"></script>
+  </body>
+</html>
