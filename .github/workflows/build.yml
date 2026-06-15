@@ -139,7 +139,12 @@ jobs:
         run: |
           deb_file="$(find release-assets -maxdepth 1 -name '*.deb' -print -quit)"
           dpkg-deb --info "$deb_file"
-          dpkg-deb --contents "$deb_file" | head -n 20
+          dpkg-deb --field "$deb_file" Architecture | grep -Fx "${{ matrix.deb_arch }}"
+          dpkg-deb --field "$deb_file" Version | grep -Fx "$(node -p "require('./package.json').version")"
+          contents_file="$(mktemp)"
+          dpkg-deb --contents "$deb_file" > "$contents_file"
+          grep -F "/usr/share/applications/dudu-pet.desktop" "$contents_file"
+          head -n 20 "$contents_file"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
