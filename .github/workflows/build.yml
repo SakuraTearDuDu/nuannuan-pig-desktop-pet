@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       upload_release:
-        description: Upload macOS DMG and app ZIP to a GitHub Release
+        description: Upload macOS and Linux assets to a GitHub Release
         required: false
         default: false
         type: boolean
@@ -151,3 +151,10 @@ jobs:
         with:
           name: 暖暖猪-桌面宠物-linux-${{ matrix.deb_arch }}
           path: release-assets/*.deb
+
+      - name: Upload Linux assets to release
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_release == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: gh release upload "$RELEASE_TAG" release-assets/*.deb --repo "$GITHUB_REPOSITORY" --clobber
