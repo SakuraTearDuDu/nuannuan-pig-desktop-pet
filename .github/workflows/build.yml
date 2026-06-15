@@ -134,6 +134,13 @@ jobs:
           deb_file="$(find dist -maxdepth 1 -name '*.deb' -print -quit)"
           cp "$deb_file" "release-assets/NuannuanPig-DesktopPet-v${version}-linux-${{ matrix.deb_arch }}.deb"
 
+      - name: Inspect DEB package
+        shell: bash
+        run: |
+          deb_file="$(find release-assets -maxdepth 1 -name '*.deb' -print -quit)"
+          dpkg-deb --info "$deb_file"
+          dpkg-deb --contents "$deb_file" | head -n 20
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
