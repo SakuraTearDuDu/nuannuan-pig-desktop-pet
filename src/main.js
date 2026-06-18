@@ -7,11 +7,25 @@ const CELL_HEIGHT = 208;
 const ATLAS_WIDTH = 1536;
 const ATLAS_HEIGHT = 1872;
 const SCALES = [0.75, 1, 1.25, 1.5];
+const APP_DISPLAY_NAME = '四眼鸡桌面宠物';
+const BASE_ACTIONS = [
+  { label: '待机', state: 'idle', duration: 0 },
+  { label: '向右跑', state: 'running-right', duration: 1800 },
+  { label: '向左跑', state: 'running-left', duration: 1800 },
+  { label: '挥手', state: 'waving', duration: 1200 },
+  { label: '跳跃', state: 'jumping', duration: 1200 },
+  { label: '难过', state: 'failed', duration: 2200 },
+  { label: '等待', state: 'waiting', duration: 1800 },
+  { label: '原地跑', state: 'running', duration: 1800 },
+  { label: '专注', state: 'review', duration: 1800 }
+];
 
 const ROOT_DIR = path.join(__dirname, '..');
 const ASSETS_DIR = path.join(ROOT_DIR, 'assets');
 const PET_JSON_PATH = path.join(ASSETS_DIR, 'pet.json');
 const SPRITESHEET_PATH = path.join(ASSETS_DIR, 'spritesheet.webp');
+const EXTRA_ACTIONS_PATH = path.join(ASSETS_DIR, 'siyanji-extra-actions.webp');
+const EXTRA_ACTIONS_JSON_PATH = path.join(ASSETS_DIR, 'siyanji-extra-actions.json');
 const TRAY_ICON_PATH = path.join(ASSETS_DIR, 'tray.png');
 
 let mainWindow = null;
@@ -19,6 +33,8 @@ let tray = null;
 let settings = null;
 let dragState = null;
 let isQuitting = false;
+let extraActions = [];
+let extraActionsManifest = null;
 
 function getSettingsPath() {
   return path.join(app.getPath('userData'), 'settings.json');
@@ -112,16 +128,54 @@ function validateAssets() {
   if (!fs.existsSync(SPRITESHEET_PATH)) {
     throw new Error(`Missing ${SPRITESHEET_PATH}`);
   }
+  if (!fs.existsSync(EXTRA_ACTIONS_PATH)) {
+    throw new Error(`Missing ${EXTRA_ACTIONS_PATH}`);
+  }
+  if (!fs.existsSync(EXTRA_ACTIONS_JSON_PATH)) {
+    throw new Error(`Missing ${EXTRA_ACTIONS_JSON_PATH}`);
+  }
 
   const pet = JSON.parse(fs.readFileSync(PET_JSON_PATH, 'utf8'));
-  if (pet.id !== 'dudu' || pet.spritesheetPath !== 'spritesheet.webp') {
-    throw new Error('pet.json must describe the bundled Dudu pet and spritesheet.webp.');
+  if (pet.id !== 'siyanji' || pet.spritesheetPath !== 'spritesheet.webp') {
+    throw new Error('pet.json must describe the bundled Siyanji pet and spritesheet.webp.');
   }
 
   const size = parseWebpSize(SPRITESHEET_PATH);
   if (size.width !== ATLAS_WIDTH || size.height !== ATLAS_HEIGHT) {
     throw new Error(`spritesheet.webp must be ${ATLAS_WIDTH}x${ATLAS_HEIGHT}; found ${size.width}x${size.height}.`);
   }
+
+  extraActionsManifest = JSON.parse(fs.readFileSync(EXTRA_ACTIONS_JSON_PATH, 'utf8'));
+  const extraSize = parseWebpSize(EXTRA_ACTIONS_PATH);
+  if (extraActionsManifest.spritesheetPath !== 'siyanji-extra-actions.webp') {
+    throw new Error('siyanji-extra-actions.json must reference siyanji-extra-actions.webp.');
+  }
+  if (
+    extraActionsManifest.cellWidth !== CELL_WIDTH
+    || extraActionsManifest.cellHeight !== CELL_HEIGHT
+    || !Number.isInteger(extraActionsManifest.columns)
+    || extraActionsManifest.columns < 1
+    || !Array.isArray(extraActionsManifest.rows)
+    || extraActionsManifest.rows.length < 1
+  ) {
+    throw new Error('siyanji-extra-actions.json has an invalid extra action layout.');
+  }
+  if (extraSize.width !== CELL_WIDTH * extraActionsManifest.columns || extraSize.height !== CELL_HEIGHT * extraActionsManifest.rows.length) {
+    throw new Error(
+      `siyanji-extra-actions.webp must be ${CELL_WIDTH * extraActionsManifest.columns}x${CELL_HEIGHT * extraActionsManifest.rows.length}; found ${extraSize.width}x${extraSize.height}.`
+    );
+  }
+
+  extraActions = extraActionsManifest.rows.map((row, index) => {
+    if (!row.id || !row.label || row.row !== index || !Number.isInteger(row.frames) || row.frames < 1 || row.frames > extraActionsManifest.columns) {
+      throw new Error(`Invalid extra action row at index ${index}.`);
+    }
+    return {
+      label: row.label,
+      state: row.id,
+      duration: Number.isFinite(row.menuDurationMs) ? row.menuDurationMs : 4000
+    };
+  });
 
   return pet;
 }
@@ -221,6 +275,14 @@ function setAlwaysOnTop(enabled) {
   emitSettings();
 }
 
+function playState(state, transientMs) {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  mainWindow.webContents.send('play-state', { state, transientMs });
+}
+
 function resetPosition() {
   if (!mainWindow || mainWindow.isDestroyed()) {
     return;
@@ -236,7 +298,7 @@ function resetPosition() {
 }
 
 function buildMenuTemplate(isTrayMenu) {
-  const visibilityLabel = settings.hidden ? '显示 暖暖猪' : '隐藏 暖暖猪';
+  const visibilityLabel = settings.hidden ? `显示 ${APP_DISPLAY_NAME}` : `隐藏 ${APP_DISPLAY_NAME}`;
   return [
     {
       label: visibilityLabel,
@@ -259,12 +321,31 @@ function buildMenuTemplate(isTrayMenu) {
       }))
     },
     {
+      label: '动作',
+      submenu: [
+        {
+          label: '基础动作',
+          submenu: BASE_ACTIONS.map(action => ({
+            label: action.label,
+            click: () => playState(action.state, action.duration)
+          }))
+        },
+        {
+          label: '扩展动作',
+          submenu: extraActions.map(action => ({
+            label: action.label,
+            click: () => playState(action.state, action.duration)
+          }))
+        }
+      ]
+    },
+    {
       label: '重置位置',
       click: resetPosition
     },
     { type: 'separator' },
     {
-      label: isTrayMenu ? '退出 暖暖猪-桌面宠物' : '退出',
+      label: isTrayMenu ? `退出 ${APP_DISPLAY_NAME}` : '退出',
       click: () => {
         isQuitting = true;
         app.quit();
@@ -287,7 +368,7 @@ function updateTrayMenu() {
 function createTray() {
   const image = nativeImage.createFromPath(TRAY_ICON_PATH);
   tray = new Tray(image.isEmpty() ? nativeImage.createEmpty() : image);
-  tray.setToolTip('暖暖猪-桌面宠物');
+  tray.setToolTip(APP_DISPLAY_NAME);
   tray.on('click', () => setWindowVisibility(settings.hidden));
   updateTrayMenu();
 }
@@ -314,7 +395,7 @@ function createWindow(pet) {
     alwaysOnTop: settings.alwaysOnTop,
     backgroundColor: '#00000000',
     icon: TRAY_ICON_PATH,
-    title: '暖暖猪-桌面宠物',
+    title: APP_DISPLAY_NAME,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -377,7 +458,8 @@ ipcMain.handle('pet:get-initial-state', () => ({
   alwaysOnTop: settings.alwaysOnTop,
   hidden: settings.hidden,
   cellWidth: CELL_WIDTH,
-  cellHeight: CELL_HEIGHT
+  cellHeight: CELL_HEIGHT,
+  extraActionsManifest
 }));
 
 ipcMain.handle('pet:begin-drag', (_event, point) => {
@@ -435,7 +517,7 @@ app.whenReady().then(() => {
     createWindow(pet);
     createTray();
   } catch (error) {
-    dialog.showErrorBox('暖暖猪-桌面宠物 启动失败', error.message);
+    dialog.showErrorBox(`${APP_DISPLAY_NAME} 启动失败`, error.message);
     app.quit();
   }
 

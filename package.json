@@ -1,28 +1,37 @@
 {
   "name": "dudu-pet",
   "version": "1.0.0",
-  "description": "暖暖猪 desktop pet packaged with Electron.",
+  "description": "四眼鸡桌面宠物 packaged with Electron.",
   "main": "src/main.js",
-  "author": "暖暖猪-桌面宠物",
+  "author": "四眼鸡桌面宠物",
   "license": "MIT",
   "private": true,
   "scripts": {
     "start": "electron .",
     "check:assets": "node scripts/check-assets.js",
+    "check:release-surface": "node scripts/check-release-surface.js",
+    "check:release-surface:dist": "node scripts/check-release-surface.js --dist",
     "export:preview": "python scripts/export-preview-media.py",
     "smoke": "set DUDU_PET_SMOKE_TEST=1&& electron .",
+    "prepackage:win": "npm run check:release-surface",
     "package:win": "electron-builder --win portable --x64 --publish never",
+    "postpackage:win": "npm run check:release-surface:dist",
+    "prepackage:mac": "npm run check:release-surface",
     "package:mac": "electron-builder --mac dmg zip --universal --publish never",
-    "package:linux": "electron-builder --linux deb --publish never"
+    "postpackage:mac": "npm run check:release-surface:dist",
+    "prepackage:linux": "npm run check:release-surface",
+    "package:linux": "electron-builder --linux deb --publish never",
+    "postpackage:linux": "npm run check:release-surface:dist"
   },
   "devDependencies": {
+    "@electron/asar": "^3.4.1",
     "electron": "^37.2.6",
     "electron-builder": "^26.0.12"
   },
   "build": {
     "appId": "com.dudupet.desktop",
-    "productName": "暖暖猪-桌面宠物",
-    "artifactName": "暖暖猪-桌面宠物.${ext}",
+    "productName": "四眼鸡桌面宠物",
+    "artifactName": "四眼鸡桌面宠物.${ext}",
     "files": [
       "src/**/*",
       "assets/**/*",
@@ -77,7 +86,7 @@
       "description": "暖暖猪 is an Electron desktop pet for Windows, macOS, Linux, UOS, and Deepin."
     },
     "portable": {
-      "artifactName": "暖暖猪-桌面宠物.${ext}"
+      "artifactName": "四眼鸡桌面宠物.${ext}"
     }
   }
 }

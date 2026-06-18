@@ -141,6 +141,12 @@ npm start
 npm run check:assets
 ```
 
+校验发布面没有暴露图片生成工具入口、密钥引用或本地生成产物：
+
+```bash
+npm run check:release-surface
+```
+
 打包 Windows 便携版：
 
 ```bash

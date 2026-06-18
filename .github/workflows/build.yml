@@ -48,8 +48,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 暖暖猪-桌面宠物-windows-x64
-          path: dist/暖暖猪-桌面宠物.exe
+          name: siyanji-desktop-pet-windows-x64
+          path: dist/四眼鸡桌面宠物.exe
 
   build-macos:
     runs-on: macos-latest
@@ -77,13 +77,24 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npm run package:mac
 
+      - name: Inspect macOS packages
+        shell: bash
+        run: |
+          test -f "dist/四眼鸡桌面宠物.dmg"
+          test -f "dist/四眼鸡桌面宠物.zip"
+          hdiutil verify "dist/四眼鸡桌面宠物.dmg"
+          tmp_dir="$(mktemp -d)"
+          ditto -x -k "dist/四眼鸡桌面宠物.zip" "$tmp_dir"
+          test -d "$tmp_dir/四眼鸡桌面宠物.app"
+          test -f "$tmp_dir/四眼鸡桌面宠物.app/Contents/Info.plist"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 暖暖猪-桌面宠物-macos-universal
+          name: siyanji-desktop-pet-macos-universal
           path: |
-            dist/*.dmg
-            dist/*.zip
+            dist/四眼鸡桌面宠物.dmg
+            dist/四眼鸡桌面宠物.zip
 
       - name: Upload macOS assets to release
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_release == true }}
@@ -92,8 +103,8 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           mkdir -p release-assets
-          cp "dist/暖暖猪-桌面宠物.dmg" "release-assets/NuannuanPig-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
-          cp "dist/暖暖猪-桌面宠物.zip" "release-assets/NuannuanPig-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
+          cp "dist/四眼鸡桌面宠物.dmg" "release-assets/Siyanji-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
+          cp "dist/四眼鸡桌面宠物.zip" "release-assets/Siyanji-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
           gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
 
   build-linux:

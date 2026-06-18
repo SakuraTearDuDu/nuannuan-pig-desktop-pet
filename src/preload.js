@@ -6,6 +6,11 @@ contextBridge.exposeInMainWorld('duduPet', {
   moveDrag: () => ipcRenderer.invoke('pet:move-drag'),
   endDrag: () => ipcRenderer.invoke('pet:end-drag'),
   showContextMenu: () => ipcRenderer.invoke('pet:show-context-menu'),
+  onPlayState: callback => {
+    const listener = (_event, payload) => callback(payload);
+    ipcRenderer.on('play-state', listener);
+    return () => ipcRenderer.removeListener('play-state', listener);
+  },
   onSettingsUpdated: callback => {
     const listener = (_event, settings) => callback(settings);
     ipcRenderer.on('settings-updated', listener);
