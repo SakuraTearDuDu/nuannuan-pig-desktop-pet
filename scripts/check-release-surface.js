@@ -3,12 +3,12 @@ const os = require('os');
 const path = require('path');
 
 const root = path.join(__dirname, '..');
-const distDir = path.join(root, 'dist');
-const sourceTextFiles = [
-  'package.json',
-  'README.txt',
-  path.join('assets', 'pet.json')
-];
+const args = process.argv.slice(2);
+const configArgIndex = args.indexOf('--config');
+const distDirArgIndex = args.indexOf('--dist-dir');
+const configRelativePath = configArgIndex >= 0 && args[configArgIndex + 1] ? args[configArgIndex + 1] : 'package.json';
+const configPath = path.resolve(root, configRelativePath);
+const distDir = path.resolve(root, distDirArgIndex >= 0 && args[distDirArgIndex + 1] ? args[distDirArgIndex + 1] : 'dist');
 const sourceDirs = ['src'];
 const textExtensions = new Set([
   '.css',
@@ -59,6 +59,10 @@ function isTextFile(filePath) {
   return textExtensions.has(path.extname(filePath).toLowerCase());
 }
 
+function hasGlobSyntax(filePath) {
+  return /[*?[\]{}]/.test(filePath);
+}
+
 function walkFiles(startPath) {
   if (!fs.existsSync(startPath)) {
     return [];
@@ -97,21 +101,59 @@ function scanText(relativePath, text, findings) {
   }
 }
 
+function readBuildConfig() {
+  if (!fs.existsSync(configPath)) {
+    throw new Error(`Build config not found: ${configPath}`);
+  }
+
+  const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  return {
+    label: normalizePath(path.relative(root, configPath)),
+    config: parsed.build && typeof parsed.build === 'object' ? parsed.build : parsed
+  };
+}
+
+function collectBuildFiles(buildConfig) {
+  return Array.isArray(buildConfig.files) ? buildConfig.files : [];
+}
+
+function collectSourceTextFiles(buildFiles, configLabel) {
+  const files = new Set([
+    'package.json',
+    'README.txt',
+    configLabel,
+    path.join('assets', 'pet.json'),
+    path.join('assets', 'koushui-ji', 'pet.json')
+  ]);
+
+  for (const entry of buildFiles) {
+    if (hasGlobSyntax(entry)) {
+      continue;
+    }
+
+    const fullPath = path.join(root, entry);
+    if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile() && isTextFile(fullPath)) {
+      files.add(entry);
+    }
+  }
+
+  return [...files];
+}
+
 function scanSource(findings) {
-  const packageJsonPath = path.join(root, 'package.json');
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-  const buildFiles = packageJson.build && Array.isArray(packageJson.build.files) ? packageJson.build.files : [];
+  const { label: configLabel, config: buildConfig } = readBuildConfig();
+  const buildFiles = collectBuildFiles(buildConfig);
 
   for (const glob of buildFiles) {
     if (riskyBuildFileGlobs.some(pattern => pattern.test(glob))) {
       findings.push({
-        file: 'package.json',
+        file: configLabel,
         detail: `risky build.files entry "${glob}" could package generation tools or local output`
       });
     }
   }
 
-  for (const relativePath of sourceTextFiles) {
+  for (const relativePath of collectSourceTextFiles(buildFiles, configLabel)) {
     const fullPath = path.join(root, relativePath);
     if (fs.existsSync(fullPath)) {
       scanText(normalizePath(relativePath), fs.readFileSync(fullPath, 'utf8'), findings);
@@ -171,12 +213,17 @@ function scanDist(findings) {
 }
 
 function main() {
-  const scanPackedDist = process.argv.includes('--dist');
+  const scanPackedDist = args.includes('--dist');
   const findings = [];
 
-  scanSource(findings);
-  if (scanPackedDist) {
-    scanDist(findings);
+  try {
+    scanSource(findings);
+    if (scanPackedDist) {
+      scanDist(findings);
+    }
+  } catch (error) {
+    console.error(`Release surface check failed: ${error.message}`);
+    process.exit(1);
   }
 
   if (findings.length > 0) {

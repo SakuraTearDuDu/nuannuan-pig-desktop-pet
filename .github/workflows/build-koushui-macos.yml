@@ -1,0 +1,70 @@
+name: Build Koushui Ji macOS Package
+
+on:
+  push:
+    branches:
+      - codex/koushui-ji-macos-build-20260703
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-koushui-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install asset check dependencies
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install pillow
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Validate Koushui Ji assets
+        run: node scripts/check-koushui-ji-assets.js
+
+      - name: Check release surface
+        run: node scripts/check-release-surface.js --config package.koushui-ji.json
+
+      - name: Package macOS DMG and app ZIP
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder --config package.koushui-ji.json --mac dmg zip --universal --publish never
+
+      - name: Check packaged release surface
+        run: node scripts/check-release-surface.js --config package.koushui-ji.json --dist --dist-dir dist-koushui-ji
+
+      - name: Inspect macOS packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "dist-koushui-ji/口水鸡桌面宠物.dmg"
+          test -f "dist-koushui-ji/口水鸡桌面宠物.zip"
+          hdiutil verify "dist-koushui-ji/口水鸡桌面宠物.dmg"
+          tmp_dir="$(mktemp -d)"
+          ditto -x -k "dist-koushui-ji/口水鸡桌面宠物.zip" "$tmp_dir"
+          test -d "$tmp_dir/口水鸡桌面宠物.app"
+          test -f "$tmp_dir/口水鸡桌面宠物.app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleName" "$tmp_dir/口水鸡桌面宠物.app/Contents/Info.plist" | grep -Fx "口水鸡桌面宠物"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: koushui-ji-desktop-pet-macos-universal
+          path: |
+            dist-koushui-ji/口水鸡桌面宠物.dmg
+            dist-koushui-ji/口水鸡桌面宠物.zip

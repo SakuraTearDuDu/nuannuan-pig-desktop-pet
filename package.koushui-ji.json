@@ -1,0 +1,58 @@
+{
+  "appId": "com.sakurateardudu.koushuiji.desktop",
+  "productName": "口水鸡桌面宠物",
+  "artifactName": "口水鸡桌面宠物.${ext}",
+  "extraMetadata": {
+    "name": "koushui-ji-desktop-pet",
+    "productName": "口水鸡桌面宠物",
+    "description": "口水鸡桌面宠物 packaged with Electron.",
+    "main": "src/koushui-ji-main.js"
+  },
+  "files": [
+    "package.json",
+    "README.txt",
+    "src/preload.js",
+    "src/koushui-ji-main.js",
+    "src/renderer/koushui-ji.html",
+    "src/renderer/koushui-ji-renderer.js",
+    "src/renderer/styles.css",
+    "assets/koushui-ji/**/*"
+  ],
+  "directories": {
+    "output": "dist-koushui-ji",
+    "buildResources": "build"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "build/koushui-ji-icon.ico"
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "universal"
+        ]
+      },
+      {
+        "target": "zip",
+        "arch": [
+          "universal"
+        ]
+      }
+    ],
+    "icon": "build/koushui-ji-icon.icns",
+    "category": "public.app-category.entertainment",
+    "identity": null
+  },
+  "portable": {
+    "artifactName": "口水鸡桌面宠物.${ext}"
+  }
+}
