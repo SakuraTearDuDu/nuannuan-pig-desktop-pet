@@ -9,21 +9,30 @@ on:
   workflow_dispatch:
     inputs:
       upload_release:
-        description: Upload macOS and Linux assets to a GitHub Release
+        description: Upload desktop package assets to a GitHub Release
         required: false
         default: false
         type: boolean
       release_tag:
-        description: Release tag to upload macOS assets to
+        description: Release tag to upload assets to
         required: false
         default: v1.0.0
         type: string
+      target_pet:
+        description: Package target to build
+        required: false
+        default: all
+        type: choice
+        options:
+          - all
+          - chuanghuo-ji-macos
 
 permissions:
   contents: read
 
 jobs:
   build-windows:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.target_pet == 'all' }}
     runs-on: windows-latest
 
     steps:
@@ -55,6 +64,7 @@ jobs:
           path: dist/四眼鸡桌面宠物.exe
 
   build-macos:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.target_pet == 'all' }}
     runs-on: macos-latest
     permissions:
       contents: write
@@ -118,7 +128,71 @@ jobs:
           cp "dist/四眼鸡桌面宠物.zip" "release-assets/Siyanji-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
           gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
 
+  build-chuanghuo-ji-macos:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'chuanghuo-ji-macos' }}
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install asset check dependencies
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install pillow
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Package Chuanghuo Ji macOS DMG and ZIP
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npm run package:chuanghuo-ji:mac
+
+      - name: Inspect Chuanghuo Ji macOS packages
+        shell: bash
+        run: |
+          test -f "dist-chuanghuo-ji/闯祸鸡桌面宠物.dmg"
+          test -f "dist-chuanghuo-ji/闯祸鸡桌面宠物.zip"
+          hdiutil verify "dist-chuanghuo-ji/闯祸鸡桌面宠物.dmg"
+          tmp_dir="$(mktemp -d)"
+          ditto -x -k "dist-chuanghuo-ji/闯祸鸡桌面宠物.zip" "$tmp_dir"
+          test -d "$tmp_dir/闯祸鸡桌面宠物.app"
+          test -f "$tmp_dir/闯祸鸡桌面宠物.app/Contents/Info.plist"
+          plutil -extract CFBundleName raw "$tmp_dir/闯祸鸡桌面宠物.app/Contents/Info.plist" | grep -Fx "闯祸鸡桌面宠物"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chuanghuo-ji-desktop-pet-macos-universal
+          path: |
+            dist-chuanghuo-ji/闯祸鸡桌面宠物.dmg
+            dist-chuanghuo-ji/闯祸鸡桌面宠物.zip
+
+      - name: Upload Chuanghuo Ji macOS assets to release
+        if: ${{ inputs.upload_release == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          mkdir -p release-assets
+          cp "dist-chuanghuo-ji/闯祸鸡桌面宠物.dmg" "release-assets/ChuanghuoJi-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
+          cp "dist-chuanghuo-ji/闯祸鸡桌面宠物.zip" "release-assets/ChuanghuoJi-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
+          gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
+
   build-linux:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.target_pet == 'all' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -159,7 +233,7 @@ jobs:
           version="$(node -p "require('./package.json').version")"
           mkdir -p release-assets
           deb_file="$(find dist -maxdepth 1 -name '*.deb' -print -quit)"
-          cp "$deb_file" "release-assets/NuannuanPig-DesktopPet-v${version}-linux-${{ matrix.deb_arch }}.deb"
+          cp "$deb_file" "release-assets/Siyanji-DesktopPet-v${version}-linux-${{ matrix.deb_arch }}.deb"
 
       - name: Inspect DEB package
         shell: bash
@@ -170,13 +244,13 @@ jobs:
           dpkg-deb --field "$deb_file" Version | grep -Fx "$(node -p "require('./package.json').version")"
           contents_file="$(mktemp)"
           dpkg-deb --contents "$deb_file" > "$contents_file"
-          grep -F "/usr/share/applications/dudu-pet.desktop" "$contents_file"
+          grep -F "/usr/share/applications/siyanji-desktop-pet.desktop" "$contents_file"
           head -n 20 "$contents_file"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 暖暖猪-桌面宠物-linux-${{ matrix.deb_arch }}
+          name: siyanji-desktop-pet-linux-${{ matrix.deb_arch }}
           path: release-assets/*.deb
 
       - name: Upload Linux assets to release

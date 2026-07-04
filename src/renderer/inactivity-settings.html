@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self';"
+    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>无互动难过时间</title>
+    <link rel="stylesheet" href="./inactivity-settings.css">
+  </head>
+  <body>
+    <main class="settings-panel">
+      <h1>无互动难过时间</h1>
+      <label class="field">
+        <span>多久不互动就难过</span>
+        <div class="input-row">
+          <input id="timeoutMinutes" type="number" min="0" max="1440" step="0.5" inputmode="decimal">
+          <span>分钟</span>
+        </div>
+      </label>
+      <p class="hint">填 0 表示关闭。保存后立即生效。</p>
+      <div class="actions">
+        <button id="disableButton" type="button">关闭</button>
+        <button id="saveButton" type="button">保存</button>
+      </div>
+      <p id="status" class="status" aria-live="polite"></p>
+    </main>
+    <script src="./inactivity-settings.js"></script>
+  </body>
+</html>
