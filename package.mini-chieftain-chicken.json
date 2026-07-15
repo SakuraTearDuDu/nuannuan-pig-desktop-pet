@@ -56,6 +56,19 @@
     "category": "public.app-category.entertainment",
     "identity": null
   },
+  "linux": {
+    "target": [
+      "deb"
+    ],
+    "icon": "assets/mini-chieftain-chicken/tray.png",
+    "category": "Utility",
+    "maintainer": "SakuraTearDuDu",
+    "artifactName": "MiniChieftainChicken-DesktopPet-v${version}-uos-${arch}.${ext}"
+  },
+  "deb": {
+    "synopsis": "mini酋长鸡 desktop pet",
+    "description": "mini酋长鸡桌面宠物 is an Electron desktop pet for Windows, macOS, Linux, UOS, and Deepin."
+  },
   "portable": {
     "artifactName": "mini酋长鸡桌面宠物.${ext}"
   }

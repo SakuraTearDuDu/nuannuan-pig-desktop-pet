@@ -27,6 +27,7 @@ on:
           - all
           - chuanghuo-ji-macos
           - mini-chieftain-chicken-macos
+          - mini-chieftain-chicken-uos
 
 permissions:
   contents: read
@@ -254,6 +255,129 @@ jobs:
           cp "dist-mini-chieftain-chicken/mini酋长鸡桌面宠物.dmg" "release-assets/MiniChieftainChicken-DesktopPet-${RELEASE_TAG}-mac-x64.dmg"
           cp "dist-mini-chieftain-chicken/mini酋长鸡桌面宠物.zip" "release-assets/MiniChieftainChicken-DesktopPet-${RELEASE_TAG}-mac-x64.zip"
           gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
+
+  build-mini-chieftain-chicken-uos:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'mini-chieftain-chicken-uos' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - eb_arch: x64
+            deb_arch: amd64
+            file_arch: x86-64
+          - eb_arch: arm64
+            deb_arch: arm64
+            file_arch: ARM aarch64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install asset check dependencies
+        run: python3 -m pip install pillow
+
+      - name: Package mini Chieftain Chicken UOS DEB
+        run: npm run package:mini-chieftain-chicken:uos -- --${{ matrix.eb_arch }}
+
+      - name: Normalize UOS artifact name
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          mkdir -p release-assets
+          deb_file="$(find dist-mini-chieftain-chicken -maxdepth 1 -name '*.deb' -print -quit)"
+          test -n "$deb_file"
+          cp "$deb_file" "release-assets/MiniChieftainChicken-DesktopPet-v${version}-UOS-${{ matrix.deb_arch }}.deb"
+
+      - name: Inspect mini Chieftain Chicken UOS package
+        shell: bash
+        run: |
+          deb_file="$(find release-assets -maxdepth 1 -name '*.deb' -print -quit)"
+          test -n "$deb_file"
+          dpkg-deb --info "$deb_file"
+          dpkg-deb --field "$deb_file" Package | grep -Fx "mini-chieftain-chicken-desktop-pet"
+          dpkg-deb --field "$deb_file" Architecture | grep -Fx "${{ matrix.deb_arch }}"
+          dpkg-deb --field "$deb_file" Version | grep -Fx "$(node -p "require('./package.json').version")"
+
+          extract_dir="$(mktemp -d)"
+          dpkg-deb --extract "$deb_file" "$extract_dir"
+          desktop_file="$extract_dir/usr/share/applications/mini-chieftain-chicken-desktop-pet.desktop"
+          icon_file="$extract_dir/usr/share/icons/hicolor/256x256/apps/mini-chieftain-chicken-desktop-pet.png"
+          app_binary="$extract_dir/opt/mini酋长鸡桌面宠物/mini酋长鸡桌面宠物"
+          app_asar="$extract_dir/opt/mini酋长鸡桌面宠物/resources/app.asar"
+          test -f "$desktop_file"
+          test -f "$icon_file"
+          test -x "$app_binary"
+          test -f "$app_asar"
+          grep -F "Name=mini酋长鸡桌面宠物" "$desktop_file"
+          file "$app_binary" | grep -F "${{ matrix.file_arch }}"
+
+          APP_ASAR="$app_asar" node <<'NODE'
+          const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
+          const crypto = require('crypto');
+          const asar = require('@electron/asar');
+          const archive = process.env.APP_ASAR;
+          const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mini-uos-asar-'));
+          const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          try {
+            asar.extractAll(archive, tempDir);
+            const required = [
+              'src/preload.js',
+              'src/mini-chieftain-chicken-main.js',
+              'src/renderer/mini-chieftain-chicken.html',
+              'src/renderer/mini-chieftain-chicken-renderer.js',
+              'src/renderer/inactivity-settings.html',
+              'src/renderer/inactivity-settings.css',
+              'src/renderer/inactivity-settings.js',
+              'assets/mini-chieftain-chicken/pet.json',
+              'assets/mini-chieftain-chicken/spritesheet.webp',
+              'assets/mini-chieftain-chicken/tray.png'
+            ];
+            const missing = required.filter(entry => !fs.existsSync(path.join(tempDir, entry)));
+            if (missing.length) throw new Error(`Missing packaged files: ${missing.join(', ')}`);
+            const main = fs.readFileSync(path.join(tempDir, 'src/mini-chieftain-chicken-main.js'), 'utf8');
+            const preload = fs.readFileSync(path.join(tempDir, 'src/preload.js'), 'utf8');
+            const settings = fs.readFileSync(path.join(tempDir, 'src/renderer/inactivity-settings.js'), 'utf8');
+            if (!main.includes("label: '自定义...'") || !main.includes("ipcMain.handle('pet:set-inactivity-sad-timeout'")) {
+              throw new Error('Custom inactivity timeout menu or IPC handler is missing.');
+            }
+            if (!preload.includes('setInactivitySadTimeout') || !settings.includes('saveMinutes')) {
+              throw new Error('Custom inactivity timeout UI bridge is missing.');
+            }
+            const sourceSprite = path.join(process.cwd(), 'assets/mini-chieftain-chicken/spritesheet.webp');
+            const packagedSprite = path.join(tempDir, 'assets/mini-chieftain-chicken/spritesheet.webp');
+            if (hash(sourceSprite) !== hash(packagedSprite)) throw new Error('Packaged spritesheet hash mismatch.');
+            console.log('UOS app.asar experience checks passed.');
+          } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+          }
+          NODE
+
+      - name: Upload UOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mini-chieftain-chicken-desktop-pet-uos-${{ matrix.deb_arch }}
+          path: release-assets/*.deb
+
+      - name: Upload mini Chieftain Chicken UOS assets to release
+        if: ${{ inputs.upload_release == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: gh release upload "$RELEASE_TAG" release-assets/*.deb --repo "$GITHUB_REPOSITORY" --clobber
 
   build-linux:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.target_pet == 'all' }}
