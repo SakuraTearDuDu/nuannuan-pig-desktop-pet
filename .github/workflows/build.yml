@@ -26,6 +26,7 @@ on:
         options:
           - all
           - chuanghuo-ji-macos
+          - mini-chieftain-chicken-macos
 
 permissions:
   contents: read
@@ -189,6 +190,69 @@ jobs:
           mkdir -p release-assets
           cp "dist-chuanghuo-ji/闯祸鸡桌面宠物.dmg" "release-assets/ChuanghuoJi-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
           cp "dist-chuanghuo-ji/闯祸鸡桌面宠物.zip" "release-assets/ChuanghuoJi-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
+          gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
+
+  build-mini-chieftain-chicken-macos:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'mini-chieftain-chicken-macos' }}
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install asset check dependencies
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install pillow
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Package mini Chieftain Chicken macOS DMG and ZIP
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npm run package:mini-chieftain-chicken:mac
+
+      - name: Inspect mini Chieftain Chicken macOS packages
+        shell: bash
+        run: |
+          test -f "dist-mini-chieftain-chicken/mini酋长鸡桌面宠物.dmg"
+          test -f "dist-mini-chieftain-chicken/mini酋长鸡桌面宠物.zip"
+          hdiutil verify "dist-mini-chieftain-chicken/mini酋长鸡桌面宠物.dmg"
+          tmp_dir="$(mktemp -d)"
+          ditto -x -k "dist-mini-chieftain-chicken/mini酋长鸡桌面宠物.zip" "$tmp_dir"
+          test -d "$tmp_dir/mini酋长鸡桌面宠物.app"
+          test -f "$tmp_dir/mini酋长鸡桌面宠物.app/Contents/Info.plist"
+          plutil -extract CFBundleName raw "$tmp_dir/mini酋长鸡桌面宠物.app/Contents/Info.plist" | grep -Fx "mini酋长鸡桌面宠物"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mini-chieftain-chicken-desktop-pet-macos-x64
+          path: |
+            dist-mini-chieftain-chicken/mini酋长鸡桌面宠物.dmg
+            dist-mini-chieftain-chicken/mini酋长鸡桌面宠物.zip
+
+      - name: Upload mini Chieftain Chicken macOS assets to release
+        if: ${{ inputs.upload_release == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          mkdir -p release-assets
+          cp "dist-mini-chieftain-chicken/mini酋长鸡桌面宠物.dmg" "release-assets/MiniChieftainChicken-DesktopPet-${RELEASE_TAG}-mac-x64.dmg"
+          cp "dist-mini-chieftain-chicken/mini酋长鸡桌面宠物.zip" "release-assets/MiniChieftainChicken-DesktopPet-${RELEASE_TAG}-mac-x64.zip"
           gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
 
   build-linux:
