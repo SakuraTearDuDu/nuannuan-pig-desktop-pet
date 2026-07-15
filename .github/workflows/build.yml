@@ -316,7 +316,7 @@ jobs:
           icon_file="$(find "$extract_dir/usr/share/icons" -type f -path '*/256x256/apps/*.png' -print -quit)"
           app_asar="$(find "$extract_dir/opt" -type f -name app.asar -print -quit)"
           app_root="$(dirname "$(dirname "$app_asar")")"
-          app_binary="$(find "$app_root" -maxdepth 1 -type f -perm /111 -print -quit)"
+          app_binary="$app_root/$(node -p "require('./package.mini-chieftain-chicken.json').extraMetadata.name")"
           echo "desktop_file=$desktop_file"
           echo "icon_file=$icon_file"
           echo "app_asar=$app_asar"
@@ -331,6 +331,7 @@ jobs:
           test -f "$desktop_file"
           test -f "$icon_file"
           test -f "$app_asar"
+          test -x "$app_binary"
           grep -F "Name=mini酋长鸡桌面宠物" "$desktop_file"
           file "$app_binary" | grep -F "${{ matrix.file_arch }}"
 
