@@ -1,0 +1,63 @@
+{
+  "appId": "com.sakurateardudu.guifeijistudentuniform.desktop",
+  "productName": "贵妃鸡（学生服）桌面宠物",
+  "artifactName": "贵妃鸡（学生服）桌面宠物.${ext}",
+  "extraMetadata": {
+    "name": "gui-fei-ji-student-uniform-pixel-desktop-pet",
+    "productName": "贵妃鸡（学生服）桌面宠物",
+    "author": "贵妃鸡（学生服）桌面宠物",
+    "description": "贵妃鸡（学生服）桌面宠物 packaged with Electron.",
+    "main": "src/gui-fei-ji-student-uniform-pixel-main.js"
+  },
+  "files": [
+    "package.json",
+    "LICENSE",
+    "src/preload.js",
+    "src/standard-pet-main.js",
+    "src/gui-fei-ji-student-uniform-pixel-main.js",
+    "src/renderer/gui-fei-ji-student-uniform-pixel.html",
+    "src/renderer/standard-pet-renderer.js",
+    "src/renderer/inactivity-settings.html",
+    "src/renderer/inactivity-settings.css",
+    "src/renderer/inactivity-settings.js",
+    "src/renderer/styles.css",
+    "assets/gui-fei-ji-student-uniform-pixel/**/*"
+  ],
+  "directories": {
+    "output": "dist-gui-fei-ji-student-uniform-pixel",
+    "buildResources": "build"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "build/gui-fei-ji-student-uniform-pixel-icon.ico"
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "universal"
+        ]
+      },
+      {
+        "target": "zip",
+        "arch": [
+          "universal"
+        ]
+      }
+    ],
+    "icon": "build/gui-fei-ji-student-uniform-pixel-icon.icns",
+    "category": "public.app-category.entertainment",
+    "identity": null
+  },
+  "portable": {
+    "artifactName": "贵妃鸡（学生服）桌面宠物.${ext}"
+  }
+}

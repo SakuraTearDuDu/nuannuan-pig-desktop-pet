@@ -26,6 +26,7 @@ on:
         options:
           - all
           - chuanghuo-ji-macos
+          - gui-fei-ji-student-uniform-pixel-macos
           - mini-chieftain-chicken-macos
           - mini-chieftain-chicken-uos
 
@@ -254,6 +255,107 @@ jobs:
           mkdir -p release-assets
           cp "dist-mini-chieftain-chicken/mini酋长鸡桌面宠物.dmg" "release-assets/MiniChieftainChicken-DesktopPet-${RELEASE_TAG}-mac-x64.dmg"
           cp "dist-mini-chieftain-chicken/mini酋长鸡桌面宠物.zip" "release-assets/MiniChieftainChicken-DesktopPet-${RELEASE_TAG}-mac-x64.zip"
+          gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
+
+  build-gui-fei-ji-student-uniform-pixel-macos:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'gui-fei-ji-student-uniform-pixel-macos' }}
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install asset check dependencies
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install pillow
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Package Gui Fei Ji macOS DMG and ZIP
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npm run package:gui-fei-ji-student-uniform-pixel:mac
+
+      - name: Inspect Gui Fei Ji macOS packages
+        shell: bash
+        run: |
+          test -f "dist-gui-fei-ji-student-uniform-pixel/贵妃鸡（学生服）桌面宠物.dmg"
+          test -f "dist-gui-fei-ji-student-uniform-pixel/贵妃鸡（学生服）桌面宠物.zip"
+          hdiutil verify "dist-gui-fei-ji-student-uniform-pixel/贵妃鸡（学生服）桌面宠物.dmg"
+          tmp_dir="$(mktemp -d)"
+          ditto -x -k "dist-gui-fei-ji-student-uniform-pixel/贵妃鸡（学生服）桌面宠物.zip" "$tmp_dir"
+          test -d "$tmp_dir/贵妃鸡（学生服）桌面宠物.app"
+          test -f "$tmp_dir/贵妃鸡（学生服）桌面宠物.app/Contents/Info.plist"
+          plutil -extract CFBundleName raw "$tmp_dir/贵妃鸡（学生服）桌面宠物.app/Contents/Info.plist" | grep -Fx "贵妃鸡（学生服）桌面宠物"
+
+          APP_ASAR="$tmp_dir/贵妃鸡（学生服）桌面宠物.app/Contents/Resources/app.asar" node <<'NODE'
+          const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
+          const crypto = require('crypto');
+          const asar = require('@electron/asar');
+          const archive = process.env.APP_ASAR;
+          const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gui-fei-mac-asar-'));
+          const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          try {
+            asar.extractAll(archive, tempDir);
+            const required = [
+              'src/preload.js',
+              'src/standard-pet-main.js',
+              'src/gui-fei-ji-student-uniform-pixel-main.js',
+              'src/renderer/gui-fei-ji-student-uniform-pixel.html',
+              'src/renderer/standard-pet-renderer.js',
+              'src/renderer/inactivity-settings.html',
+              'src/renderer/inactivity-settings.css',
+              'src/renderer/inactivity-settings.js',
+              'assets/gui-fei-ji-student-uniform-pixel/pet.json',
+              'assets/gui-fei-ji-student-uniform-pixel/spritesheet.webp',
+              'assets/gui-fei-ji-student-uniform-pixel/tray.png'
+            ];
+            const missing = required.filter(entry => !fs.existsSync(path.join(tempDir, entry)));
+            if (missing.length) throw new Error(`Missing packaged files: ${missing.join(', ')}`);
+            const pet = JSON.parse(fs.readFileSync(path.join(tempDir, 'assets/gui-fei-ji-student-uniform-pixel/pet.json'), 'utf8'));
+            if (pet.id !== 'gui-fei-ji-student-uniform-pixel') throw new Error(`Wrong pet id: ${pet.id}`);
+            if (pet.spriteVersionNumber !== 2) throw new Error(`Wrong spriteVersionNumber: ${pet.spriteVersionNumber}`);
+            const sourceSprite = path.join(process.cwd(), 'assets/gui-fei-ji-student-uniform-pixel/spritesheet.webp');
+            const packagedSprite = path.join(tempDir, 'assets/gui-fei-ji-student-uniform-pixel/spritesheet.webp');
+            if (hash(sourceSprite) !== hash(packagedSprite)) throw new Error('Packaged spritesheet hash mismatch.');
+            console.log('Gui Fei Ji macOS app.asar checks passed.');
+          } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+          }
+          NODE
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gui-fei-ji-student-uniform-pixel-desktop-pet-macos-universal
+          path: |
+            dist-gui-fei-ji-student-uniform-pixel/贵妃鸡（学生服）桌面宠物.dmg
+            dist-gui-fei-ji-student-uniform-pixel/贵妃鸡（学生服）桌面宠物.zip
+
+      - name: Upload Gui Fei Ji macOS assets to release
+        if: ${{ inputs.upload_release == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          mkdir -p release-assets
+          cp "dist-gui-fei-ji-student-uniform-pixel/贵妃鸡（学生服）桌面宠物.dmg" "release-assets/GuiFeiJiStudentUniform-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
+          cp "dist-gui-fei-ji-student-uniform-pixel/贵妃鸡（学生服）桌面宠物.zip" "release-assets/GuiFeiJiStudentUniform-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
           gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
 
   build-mini-chieftain-chicken-uos:
