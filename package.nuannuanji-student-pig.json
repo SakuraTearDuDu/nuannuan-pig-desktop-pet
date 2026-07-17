@@ -57,6 +57,19 @@
     "category": "public.app-category.entertainment",
     "identity": null
   },
+  "linux": {
+    "target": [
+      "deb"
+    ],
+    "icon": "assets/nuannuanji-student-pig/tray.png",
+    "category": "Utility",
+    "maintainer": "SakuraTearDuDu",
+    "artifactName": "NuannuanjiStudentPig-DesktopPet-v${version}-UOS-${arch}.${ext}"
+  },
+  "deb": {
+    "synopsis": "暖暖鸡（学生小猪版） desktop pet",
+    "description": "暖暖鸡（学生小猪版）桌面宠物 is an Electron desktop pet for Windows, macOS, Linux, UOS, and Deepin."
+  },
   "portable": {
     "artifactName": "暖暖鸡（学生小猪版）桌面宠物.${ext}"
   }
