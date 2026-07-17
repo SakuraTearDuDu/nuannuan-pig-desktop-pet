@@ -1,0 +1,63 @@
+{
+  "appId": "com.sakurateardudu.nuannuanjistudentpig.desktop",
+  "productName": "暖暖鸡（学生小猪版）桌面宠物",
+  "artifactName": "暖暖鸡（学生小猪版）桌面宠物.${ext}",
+  "extraMetadata": {
+    "name": "nuannuanji-student-pig-desktop-pet",
+    "productName": "暖暖鸡（学生小猪版）桌面宠物",
+    "author": "暖暖鸡（学生小猪版）桌面宠物",
+    "description": "暖暖鸡（学生小猪版）桌面宠物 packaged with Electron.",
+    "main": "src/nuannuanji-student-pig-main.js"
+  },
+  "files": [
+    "package.json",
+    "LICENSE",
+    "src/preload.js",
+    "src/standard-pet-main.js",
+    "src/nuannuanji-student-pig-main.js",
+    "src/renderer/nuannuanji-student-pig.html",
+    "src/renderer/standard-pet-renderer.js",
+    "src/renderer/inactivity-settings.html",
+    "src/renderer/inactivity-settings.css",
+    "src/renderer/inactivity-settings.js",
+    "src/renderer/styles.css",
+    "assets/nuannuanji-student-pig/**/*"
+  ],
+  "directories": {
+    "output": "dist-nuannuanji-student-pig",
+    "buildResources": "build"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "build/nuannuanji-student-pig-icon.ico"
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "universal"
+        ]
+      },
+      {
+        "target": "zip",
+        "arch": [
+          "universal"
+        ]
+      }
+    ],
+    "icon": "build/nuannuanji-student-pig-icon.icns",
+    "category": "public.app-category.entertainment",
+    "identity": null
+  },
+  "portable": {
+    "artifactName": "暖暖鸡（学生小猪版）桌面宠物.${ext}"
+  }
+}
