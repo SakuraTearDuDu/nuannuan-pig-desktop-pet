@@ -1,0 +1,564 @@
+{
+  "version": 1,
+  "spritesheetPath": "siyanji-long-actions.webp",
+  "cellWidth": 192,
+  "cellHeight": 208,
+  "columns": 24,
+  "rows": 18,
+  "actions": [
+    {
+      "id": "iq-dance",
+      "label": "IQ博士舞蹈",
+      "row": 0,
+      "rowCount": 6,
+      "frames": 144,
+      "menuDurationMs": 8752,
+      "durations": [
+        70,
+        58,
+        58,
+        58,
+        70,
+        58,
+        58,
+        58,
+        70,
+        58,
+        58,
+        58,
+        70,
+        58,
+        58,
+        58,
+        70,
+        58,
+        58,
+        58,
+        70,
+        58,
+        58,
+        58,
+        70,
+        58,
+        58,
+        58,
+        70,
+        58,
+        58,
+        58,
+        70,
+        58,
+        58,
+        58,
+        70,
+        58,
+        58,
+        58,
+        70,
+        58,
+        58,
+        58,
+        70,
+        58,
+        58,
+        58,
+        70,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        50,
+        50,
+        62,
+        64,
+        64,
+        64,
+        64,
+        64,
+        86,
+        64,
+        64,
+        64,
+        64,
+        64,
+        86,
+        64,
+        64,
+        64,
+        64,
+        64,
+        86,
+        64,
+        64,
+        64,
+        64,
+        64,
+        86,
+        64,
+        64,
+        64,
+        64,
+        64,
+        86,
+        64,
+        64,
+        64,
+        64,
+        64,
+        86,
+        64,
+        64,
+        64,
+        64,
+        64,
+        86,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "frameChecks": {
+        "adjacentDifferent": true,
+        "minAdjacentDiff": 132090,
+        "loopAdjacentDiff": 1103934,
+        "maxAdjacentDiff": 4901359
+      },
+      "phrases": [
+        "front-entry",
+        "left-turn",
+        "back-pivot",
+        "right-return",
+        "front-bounce-hop",
+        "playful-lean",
+        "loop-settle"
+      ]
+    },
+    {
+      "id": "horse-riding",
+      "label": "骑马",
+      "frames": 12,
+      "durations": [
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80
+      ],
+      "source": {
+        "zip": "四眼鸡骑马_frames_rainbow_clean.zip",
+        "ranges": [
+          [
+            0,
+            11
+          ]
+        ]
+      },
+      "row": 6,
+      "rowCount": 1,
+      "menuDurationMs": 960,
+      "frameChecks": {
+        "adjacentDifferent": true,
+        "minAdjacentDiff": 3559826,
+        "loopAdjacentDiff": 6286313,
+        "maxAdjacentDiff": 6286313
+      }
+    },
+    {
+      "id": "hd-bag-blink",
+      "label": "高清背包眨眼",
+      "frames": 6,
+      "durations": [
+        145,
+        145,
+        145,
+        145,
+        145,
+        260
+      ],
+      "source": {
+        "zip": "四眼鸡高清精灵图_frames.zip",
+        "ranges": [
+          [
+            0,
+            5
+          ]
+        ]
+      },
+      "row": 7,
+      "rowCount": 1,
+      "menuDurationMs": 985,
+      "frameChecks": {
+        "adjacentDifferent": true,
+        "minAdjacentDiff": 1875881,
+        "loopAdjacentDiff": 1875881,
+        "maxAdjacentDiff": 4877468
+      }
+    },
+    {
+      "id": "hd-bag-stroll",
+      "label": "高清背包散步",
+      "frames": 20,
+      "durations": [
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        190
+      ],
+      "source": {
+        "zip": "四眼鸡高清精灵图_frames.zip",
+        "ranges": [
+          [
+            8,
+            27
+          ]
+        ]
+      },
+      "row": 8,
+      "rowCount": 1,
+      "menuDurationMs": 1672,
+      "frameChecks": {
+        "adjacentDifferent": true,
+        "minAdjacentDiff": 1901356,
+        "loopAdjacentDiff": 6923688,
+        "maxAdjacentDiff": 10381430
+      }
+    },
+    {
+      "id": "hd-bag-stand",
+      "label": "高清背包站定",
+      "frames": 5,
+      "durations": [
+        150,
+        150,
+        150,
+        150,
+        260
+      ],
+      "source": {
+        "zip": "四眼鸡高清精灵图_frames.zip",
+        "ranges": [
+          [
+            32,
+            36
+          ]
+        ]
+      },
+      "row": 9,
+      "rowCount": 1,
+      "menuDurationMs": 860,
+      "frameChecks": {
+        "adjacentDifferent": true,
+        "minAdjacentDiff": 3025691,
+        "loopAdjacentDiff": 3025691,
+        "maxAdjacentDiff": 6190680
+      }
+    },
+    {
+      "id": "hd-sad-turn",
+      "label": "高清低落转身",
+      "frames": 29,
+      "durations": [
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        280
+      ],
+      "source": {
+        "zip": "四眼鸡高清精灵图_frames.zip",
+        "ranges": [
+          [
+            40,
+            68
+          ]
+        ]
+      },
+      "row": 10,
+      "rowCount": 2,
+      "menuDurationMs": 2576,
+      "frameChecks": {
+        "adjacentDifferent": true,
+        "minAdjacentDiff": 1587364,
+        "loopAdjacentDiff": 14266409,
+        "maxAdjacentDiff": 14266409
+      }
+    },
+    {
+      "id": "fresh-blink",
+      "label": "新款眨眼",
+      "frames": 6,
+      "durations": [
+        145,
+        145,
+        145,
+        145,
+        145,
+        260
+      ],
+      "source": {
+        "zip": "image-2073081947419746304_frames.zip",
+        "ranges": [
+          [
+            0,
+            5
+          ]
+        ]
+      },
+      "row": 12,
+      "rowCount": 1,
+      "menuDurationMs": 985,
+      "frameChecks": {
+        "adjacentDifferent": true,
+        "minAdjacentDiff": 1505061,
+        "loopAdjacentDiff": 1823429,
+        "maxAdjacentDiff": 4669519
+      }
+    },
+    {
+      "id": "fresh-daily-combo",
+      "label": "新款日常连招",
+      "frames": 30,
+      "durations": [
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        220
+      ],
+      "source": {
+        "zip": "image-2073081947419746304_frames.zip",
+        "ranges": [
+          [
+            8,
+            37
+          ]
+        ]
+      },
+      "row": 13,
+      "rowCount": 2,
+      "menuDurationMs": 2424,
+      "frameChecks": {
+        "adjacentDifferent": true,
+        "minAdjacentDiff": 1477099,
+        "loopAdjacentDiff": 6935094,
+        "maxAdjacentDiff": 12926155
+      }
+    },
+    {
+      "id": "fresh-energy-burst",
+      "label": "新款活力爆发",
+      "frames": 15,
+      "durations": [
+        88,
+        88,
+        88,
+        88,
+        88,
+        88,
+        88,
+        88,
+        88,
+        88,
+        88,
+        88,
+        88,
+        88,
+        210
+      ],
+      "source": {
+        "zip": "image-2073081947419746304_frames.zip",
+        "ranges": [
+          [
+            40,
+            54
+          ]
+        ]
+      },
+      "row": 15,
+      "rowCount": 1,
+      "menuDurationMs": 1442,
+      "frameChecks": {
+        "adjacentDifferent": true,
+        "minAdjacentDiff": 2442829,
+        "loopAdjacentDiff": 5732423,
+        "maxAdjacentDiff": 11628946
+      }
+    },
+    {
+      "id": "fresh-peace",
+      "label": "新款比耶互动",
+      "frames": 6,
+      "durations": [
+        145,
+        145,
+        145,
+        145,
+        145,
+        260
+      ],
+      "source": {
+        "zip": "image-2073081947419746304_frames.zip",
+        "ranges": [
+          [
+            56,
+            61
+          ]
+        ]
+      },
+      "row": 16,
+      "rowCount": 1,
+      "menuDurationMs": 985,
+      "frameChecks": {
+        "adjacentDifferent": true,
+        "minAdjacentDiff": 2178696,
+        "loopAdjacentDiff": 4805361,
+        "maxAdjacentDiff": 4805361
+      }
+    },
+    {
+      "id": "fresh-dizzy",
+      "label": "新款眩晕惊讶",
+      "frames": 6,
+      "durations": [
+        145,
+        145,
+        145,
+        145,
+        145,
+        280
+      ],
+      "source": {
+        "zip": "image-2073081947419746304_frames.zip",
+        "ranges": [
+          [
+            64,
+            69
+          ]
+        ]
+      },
+      "row": 17,
+      "rowCount": 1,
+      "menuDurationMs": 1005,
+      "frameChecks": {
+        "adjacentDifferent": true,
+        "minAdjacentDiff": 3165680,
+        "loopAdjacentDiff": 5697301,
+        "maxAdjacentDiff": 5697301
+      }
+    }
+  ]
+}

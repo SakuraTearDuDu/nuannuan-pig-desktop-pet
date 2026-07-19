@@ -8,11 +8,13 @@ const petPath = path.join(assetsDir, 'pet.json');
 const spritesheetPath = path.join(assetsDir, 'spritesheet.webp');
 const extraActionsPath = path.join(assetsDir, 'siyanji-extra-actions.webp');
 const extraActionsJsonPath = path.join(assetsDir, 'siyanji-extra-actions.json');
+const longActionsPath = path.join(assetsDir, 'siyanji-long-actions.webp');
+const longActionsJsonPath = path.join(assetsDir, 'siyanji-long-actions.json');
 
 function parseWebpSize(filePath) {
   const data = fs.readFileSync(filePath);
   if (data.length < 30 || data.toString('ascii', 0, 4) !== 'RIFF' || data.toString('ascii', 8, 12) !== 'WEBP') {
-    throw new Error('spritesheet.webp is not a valid WEBP RIFF file.');
+    throw new Error('WEBP file is invalid.');
   }
 
   let offset = 12;
@@ -53,11 +55,11 @@ function pythonFrameCheck() {
   const script = `
 from pathlib import Path
 from PIL import Image, ImageChops
+import json
 
 root = Path(r"${root.replace(/\\/g, '\\\\')}")
 manifest_path = root / "assets" / "siyanji-extra-actions.json"
 asset_path = root / "assets" / "siyanji-extra-actions.webp"
-import json
 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 cell_width = manifest["cellWidth"]
 cell_height = manifest["cellHeight"]
@@ -81,6 +83,58 @@ print("OK")
   if (result.status !== 0) {
     const details = (result.stderr || result.stdout || '').trim();
     throw new Error(`Extra action frame difference check failed${details ? `: ${details}` : ''}`);
+  }
+}
+
+function validateLongActions() {
+  if (!fs.existsSync(longActionsPath) || !fs.existsSync(longActionsJsonPath)) {
+    return;
+  }
+
+  const manifest = JSON.parse(fs.readFileSync(longActionsJsonPath, 'utf8'));
+  if (manifest.version !== 1) {
+    throw new Error(`Expected long actions manifest version 1; found ${manifest.version}`);
+  }
+  if (manifest.spritesheetPath !== 'siyanji-long-actions.webp') {
+    throw new Error(`Expected long actions spritesheetPath siyanji-long-actions.webp; found ${manifest.spritesheetPath}`);
+  }
+  if (manifest.cellWidth !== 192 || manifest.cellHeight !== 208) {
+    throw new Error(`Expected long action cells 192x208; found ${manifest.cellWidth}x${manifest.cellHeight}`);
+  }
+  if (manifest.columns !== 24 || !Number.isInteger(manifest.rows) || manifest.rows < 1) {
+    throw new Error(`Expected long actions atlas to use 24 columns and a positive row count; found ${manifest.columns}x${manifest.rows}`);
+  }
+  if (!Array.isArray(manifest.actions) || manifest.actions.length < 1) {
+    throw new Error('Expected at least one long action.');
+  }
+
+  const longSize = parseWebpSize(longActionsPath);
+  const expectedLongWidth = manifest.cellWidth * manifest.columns;
+  const expectedLongHeight = manifest.cellHeight * manifest.rows;
+  if (longSize.width !== expectedLongWidth || longSize.height !== expectedLongHeight) {
+    throw new Error(`Expected long actions ${expectedLongWidth}x${expectedLongHeight}; found ${longSize.width}x${longSize.height}`);
+  }
+
+  for (const action of manifest.actions) {
+    if (!Number.isInteger(action.row) || !Number.isInteger(action.rowCount) || action.rowCount < 1) {
+      throw new Error(`Invalid long action row metadata for ${action.id}.`);
+    }
+    if (!Number.isInteger(action.frames) || action.frames < 1) {
+      throw new Error(`Invalid long action frame count for ${action.id}.`);
+    }
+    if (!Array.isArray(action.durations) || action.durations.length !== action.frames) {
+      throw new Error(`Expected ${action.id} to have ${action.frames} frame durations.`);
+    }
+    const expectedRows = Math.ceil(action.frames / manifest.columns);
+    if (action.rowCount !== expectedRows) {
+      throw new Error(`Expected ${action.id} rowCount ${expectedRows}; found ${action.rowCount}`);
+    }
+    if (action.row + action.rowCount > manifest.rows) {
+      throw new Error(`Long action ${action.id} exceeds atlas row bounds.`);
+    }
+    if (!action.frameChecks || action.frameChecks.adjacentDifferent !== true) {
+      throw new Error(`Expected ${action.id} to pass adjacent frame checks.`);
+    }
   }
 }
 
@@ -149,6 +203,7 @@ function main() {
     throw new Error(`Expected extra actions ${expectedExtraWidth}x${expectedExtraHeight}; found ${extraSize.width}x${extraSize.height}`);
   }
   pythonFrameCheck();
+  validateLongActions();
 
   console.log(`OK: ${pet.displayName || pet.id} assets validated (${size.width}x${size.height}, extra ${extraSize.width}x${extraSize.height}).`);
 }

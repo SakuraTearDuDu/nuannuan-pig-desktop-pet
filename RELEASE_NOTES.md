@@ -1,33 +1,31 @@
-# Unreleased
+# v2.0
 
-## 变更
-
-- 新增 macOS universal 未签名测试包构建配置，可生成 `.dmg` 和 `.zip` 版 `.app`。
-- 新增手动发布流程，可把 macOS 测试包上传到 GitHub Release 附件。
-
-# v1.0.0
-
-首个公开版本。
+四眼鸡桌面宠物 v2.0。
 
 ## 功能
 
 - Windows x64 便携版 EXE，双击即可运行。
+- macOS universal 未签名测试包，提供 DMG 和 `.app` ZIP。
 - 透明、无边框、始终置顶的桌面宠物窗口。
-- 内置暖暖猪宠物资源，不需要安装 Codex App。
-- 支持待机、跑步、挥手、跳跃、等待、失败、专注查看等动画状态。
+- 内置四眼鸡宠物资源，不需要安装 Codex App。
+- 右键菜单支持 29 个动作：
+  - 基础动作：待机、向右跑、向左跑、挥手、跳跃、难过、等待、原地跑、专注。
+- 扩展动作：睡觉、生气、伤心、读书、打游戏、学习、被戳一惊、趴下大哭、生气回头。
+  - 长动作：IQ博士舞蹈、骑马、高清背包和新款动作组。
+- 点击右键菜单里的动作后会持续循环播放，直到用户选择其他动作或退出循环状态。
+- 优化拖动和点击交互，修复左右拖动不触发左右跑、双击不触发跳跃，以及拖动后误触发趴下大哭的问题。
+- 无人操作时自动随机播放动作，拖拽或手动触发时不会抢占当前状态。
 - 支持拖拽移动、右键菜单、系统托盘菜单、缩放、重置位置和退出。
-- 修复长按拖拽时窗口可能异常变大的问题。
 
 ## 下载
 
 请下载 Release 附件中的：
 
-- `NuannuanPig-DesktopPet.exe`：直接运行版。
-- `NuannuanPig-DesktopPet-v1.0.0-win-x64.zip`：解压后得到中文文件名 `暖暖猪-桌面宠物.exe`。
-- `NuannuanPig-DesktopPet-v1.0.0-mac-universal.dmg`：macOS universal 测试版 DMG。
-- `NuannuanPig-DesktopPet-v1.0.0-mac-universal.zip`：macOS universal 测试版 `.app` 压缩包。
-- `nuannuan-pig-animation-preview.gif`：全部动作 GIF 预览。
-- `nuannuan-pig-animation-preview.mp4`：全部动作短视频预览。
+- `Siyanji-DesktopPet-v2.0-win-x64.exe`：Windows x64 便携版。
+- `Siyanji-DesktopPet-v2.0-mac-universal.dmg`：macOS universal 测试版 DMG。
+- `Siyanji-DesktopPet-v2.0-mac-universal.zip`：macOS universal 测试版 `.app` 压缩包。
+- `siyanji-all-actions-preview.gif`：全部动作 GIF 预览。
+- `siyanji-all-actions-preview.mp4`：全部动作短视频预览。
 
 ## 已知说明
 
