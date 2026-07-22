@@ -62,6 +62,19 @@
     "category": "public.app-category.entertainment",
     "identity": null
   },
+  "linux": {
+    "target": [
+      "deb"
+    ],
+    "icon": "build/all-pets-icon.png",
+    "category": "Utility",
+    "maintainer": "SakuraTearDuDu",
+    "artifactName": "Dawanji-Zongdongyuan-DesktopPet-v${version}-UOS-${arch}.${ext}"
+  },
+  "deb": {
+    "synopsis": "大湾鸡总动员 desktop pet",
+    "description": "大湾鸡总动员 is an Electron desktop pet collection for Windows, macOS, Linux, UOS, and Deepin."
+  },
   "portable": {
     "artifactName": "大湾鸡总动员.${ext}"
   }

@@ -49,7 +49,7 @@ const ALL_PETS_ASSETS_DIR = path.join(ROOT_DIR, 'android', 'all-pets-apk', 'app'
 const TRAY_ICON_PATH = path.join(
   ROOT_DIR,
   'build',
-  process.platform === 'darwin' ? 'all-pets-icon.png' : 'all-pets-icon.ico'
+  process.platform === 'win32' ? 'all-pets-icon.ico' : 'all-pets-icon.png'
 );
 
 let settingsWindow = null;
