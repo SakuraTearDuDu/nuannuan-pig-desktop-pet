@@ -1,0 +1,68 @@
+{
+  "appId": "com.sakurateardudu.dawanjizongdongyuan.desktop",
+  "productName": "大湾鸡总动员",
+  "artifactName": "大湾鸡总动员.${ext}",
+  "extraMetadata": {
+    "name": "dawanji-zongdongyuan-desktop-pet",
+    "productName": "大湾鸡总动员",
+    "author": "大湾鸡总动员",
+    "description": "大湾鸡总动员 packaged with Electron.",
+    "main": "src/all-pets-main.js"
+  },
+  "files": [
+    "package.json",
+    "LICENSE",
+    "src/preload.js",
+    "src/all-pets-main.js",
+    "src/renderer/all-pets.html",
+    "src/renderer/all-pets-renderer.js",
+    "src/renderer/all-pets-control.html",
+    "src/renderer/all-pets-control.css",
+    "src/renderer/all-pets-control.js",
+    "src/renderer/inactivity-settings.html",
+    "src/renderer/inactivity-settings.css",
+    "src/renderer/inactivity-settings.js",
+    "src/renderer/styles.css",
+    "android/all-pets-apk/app/src/main/assets/**/*",
+    "build/all-pets-icon.ico",
+    "build/all-pets-icon.icns",
+    "build/all-pets-icon.png"
+  ],
+  "directories": {
+    "output": "dist-all-pets",
+    "buildResources": "build"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "build/all-pets-icon.ico"
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "universal"
+        ]
+      },
+      {
+        "target": "zip",
+        "arch": [
+          "universal"
+        ]
+      }
+    ],
+    "icon": "build/all-pets-icon.icns",
+    "category": "public.app-category.entertainment",
+    "identity": null
+  },
+  "portable": {
+    "artifactName": "大湾鸡总动员.${ext}"
+  }
+}

@@ -25,11 +25,13 @@ on:
         type: choice
         options:
           - all
+          - all-pets-macos
           - chuanghuo-ji-macos
           - gui-fei-ji-student-uniform-pixel-macos
           - mini-chieftain-chicken-macos
           - nuannuanji-student-pig-macos
           - mini-chieftain-chicken-uos
+          - nuannuanji-student-pig-uos
 
 permissions:
   contents: read
@@ -494,6 +496,148 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: gh release upload "$RELEASE_TAG" release-assets/*.deb --repo "$GITHUB_REPOSITORY" --clobber
 
+  build-nuannuanji-student-pig-uos:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'nuannuanji-student-pig-uos' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - eb_arch: x64
+            deb_arch: amd64
+            file_arch: x86-64
+          - eb_arch: arm64
+            deb_arch: arm64
+            file_arch: ARM aarch64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install asset check dependencies
+        run: python3 -m pip install pillow
+
+      - name: Validate Nuannuanji Student Pig assets
+        run: node scripts/check-nuannuanji-student-pig-assets.js
+
+      - name: Check release surface
+        run: node scripts/check-release-surface.js --config package.nuannuanji-student-pig.json
+
+      - name: Package Nuannuanji Student Pig UOS DEB
+        run: npm run package:nuannuanji-student-pig:uos -- --${{ matrix.eb_arch }}
+
+      - name: Normalize UOS artifact name
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          mkdir -p release-assets
+          deb_file="$(find dist-nuannuanji-student-pig-uos -maxdepth 1 -name '*.deb' -print -quit)"
+          test -n "$deb_file"
+          cp "$deb_file" "release-assets/NuannuanjiStudentPig-DesktopPet-v${version}-UOS-${{ matrix.deb_arch }}.deb"
+
+      - name: Inspect Nuannuanji Student Pig UOS package
+        shell: bash
+        run: |
+          deb_file="$(find release-assets -maxdepth 1 -name '*.deb' -print -quit)"
+          test -n "$deb_file"
+          dpkg-deb --info "$deb_file"
+          dpkg-deb --field "$deb_file" Package | grep -Fx "nuannuanji-student-pig-desktop-pet"
+          dpkg-deb --field "$deb_file" Architecture | grep -Fx "${{ matrix.deb_arch }}"
+          dpkg-deb --field "$deb_file" Version | grep -Fx "$(node -p "require('./package.json').version")"
+
+          extract_dir="$(mktemp -d)"
+          dpkg-deb --extract "$deb_file" "$extract_dir"
+          desktop_file="$(find "$extract_dir/usr/share/applications" -type f -name '*.desktop' -print -quit)"
+          icon_file="$(find "$extract_dir/usr/share/icons" -type f -path '*/256x256/apps/*.png' -print -quit)"
+          app_asar="$(find "$extract_dir/opt" -type f -name app.asar -print -quit)"
+          app_root="$(dirname "$(dirname "$app_asar")")"
+          app_binary="$app_root/$(node -p "require('./package.nuannuanji-student-pig.json').extraMetadata.name")"
+          echo "desktop_file=$desktop_file"
+          echo "icon_file=$icon_file"
+          echo "app_asar=$app_asar"
+          echo "app_root=$app_root"
+          echo "app_root_files="
+          find "$app_root" -maxdepth 1 -type f -printf '%f\n'
+          echo "app_binary=$app_binary"
+          test -n "$desktop_file"
+          test -n "$icon_file"
+          test -n "$app_asar"
+          test -n "$app_binary"
+          test -f "$desktop_file"
+          test -f "$icon_file"
+          test -f "$app_asar"
+          test -x "$app_binary"
+          grep -F "Name=暖暖鸡（学生小猪版）桌面宠物" "$desktop_file"
+          file "$app_binary" | grep -F "${{ matrix.file_arch }}"
+
+          APP_ASAR="$app_asar" node <<'NODE'
+          const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
+          const crypto = require('crypto');
+          const asar = require('@electron/asar');
+          const archive = process.env.APP_ASAR;
+          const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nuannuanji-uos-asar-'));
+          const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          try {
+            asar.extractAll(archive, tempDir);
+            const required = [
+              'src/preload.js',
+              'src/standard-pet-main.js',
+              'src/nuannuanji-student-pig-main.js',
+              'src/renderer/nuannuanji-student-pig.html',
+              'src/renderer/standard-pet-renderer.js',
+              'src/renderer/inactivity-settings.html',
+              'src/renderer/inactivity-settings.css',
+              'src/renderer/inactivity-settings.js',
+              'assets/nuannuanji-student-pig/pet.json',
+              'assets/nuannuanji-student-pig/spritesheet.webp',
+              'assets/nuannuanji-student-pig/tray.png'
+            ];
+            const missing = required.filter(entry => !fs.existsSync(path.join(tempDir, entry)));
+            if (missing.length) throw new Error(`Missing packaged files: ${missing.join(', ')}`);
+            const pet = JSON.parse(fs.readFileSync(path.join(tempDir, 'assets/nuannuanji-student-pig/pet.json'), 'utf8'));
+            if (pet.id !== 'nuannuanji-student-pig') throw new Error(`Wrong pet id: ${pet.id}`);
+            if (pet.displayName !== '暖暖鸡（学生小猪版）') throw new Error(`Wrong displayName: ${pet.displayName}`);
+            if (pet.spriteVersionNumber !== 2) throw new Error(`Wrong spriteVersionNumber: ${pet.spriteVersionNumber}`);
+            const preload = fs.readFileSync(path.join(tempDir, 'src/preload.js'), 'utf8');
+            const settings = fs.readFileSync(path.join(tempDir, 'src/renderer/inactivity-settings.js'), 'utf8');
+            if (!preload.includes('setInactivitySadTimeout') || !settings.includes('saveMinutes')) {
+              throw new Error('Custom inactivity timeout UI bridge is missing.');
+            }
+            const sourceSprite = path.join(process.cwd(), 'assets/nuannuanji-student-pig/spritesheet.webp');
+            const packagedSprite = path.join(tempDir, 'assets/nuannuanji-student-pig/spritesheet.webp');
+            if (hash(sourceSprite) !== hash(packagedSprite)) throw new Error('Packaged spritesheet hash mismatch.');
+            console.log('Nuannuanji Student Pig UOS app.asar checks passed.');
+          } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+          }
+          NODE
+
+      - name: Upload UOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuannuanji-student-pig-desktop-pet-uos-${{ matrix.deb_arch }}
+          path: release-assets/*.deb
+
+      - name: Upload Nuannuanji Student Pig UOS assets to release
+        if: ${{ inputs.upload_release == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: gh release upload "$RELEASE_TAG" release-assets/*.deb --repo "$GITHUB_REPOSITORY" --clobber
+
   build-nuannuanji-student-pig-macos:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'nuannuanji-student-pig-macos' }}
     runs-on: macos-latest
@@ -603,6 +747,125 @@ jobs:
           mkdir -p release-assets
           cp "dist-nuannuanji-student-pig/暖暖鸡（学生小猪版）桌面宠物.dmg" "release-assets/NuannuanjiStudentPig-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
           cp "dist-nuannuanji-student-pig/暖暖鸡（学生小猪版）桌面宠物.zip" "release-assets/NuannuanjiStudentPig-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
+          gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
+
+  build-all-pets-macos:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'all-pets-macos' }}
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate all-pets assets
+        run: npm run check:all-pets-assets
+
+      - name: Check all-pets release surface
+        run: node scripts/check-release-surface.js --config package.all-pets.json
+
+      - name: Package all-pets macOS DMG and ZIP
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npm run package:all-pets:mac
+
+      - name: Inspect all-pets macOS packages
+        shell: bash
+        run: |
+          test -f "dist-all-pets/大湾鸡总动员.dmg"
+          test -f "dist-all-pets/大湾鸡总动员.zip"
+          hdiutil verify "dist-all-pets/大湾鸡总动员.dmg"
+          tmp_dir="$(mktemp -d)"
+          ditto -x -k "dist-all-pets/大湾鸡总动员.zip" "$tmp_dir"
+          test -d "$tmp_dir/大湾鸡总动员.app"
+          test -f "$tmp_dir/大湾鸡总动员.app/Contents/Info.plist"
+          plutil -extract CFBundleName raw "$tmp_dir/大湾鸡总动员.app/Contents/Info.plist" | grep -Fx "大湾鸡总动员"
+
+          APP_ASAR="$tmp_dir/大湾鸡总动员.app/Contents/Resources/app.asar" node <<'NODE'
+          const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
+          const asar = require('@electron/asar');
+          const archive = process.env.APP_ASAR;
+          const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'all-pets-mac-asar-'));
+          try {
+            asar.extractAll(archive, tempDir);
+            const required = [
+              'src/preload.js',
+              'src/all-pets-main.js',
+              'src/renderer/all-pets.html',
+              'src/renderer/all-pets-renderer.js',
+              'src/renderer/all-pets-control.html',
+              'src/renderer/all-pets-control.css',
+              'src/renderer/all-pets-control.js',
+              'src/renderer/inactivity-settings.html',
+              'src/renderer/inactivity-settings.css',
+              'src/renderer/inactivity-settings.js',
+              'build/all-pets-icon.icns',
+              'build/all-pets-icon.png',
+              'android/all-pets-apk/app/src/main/assets/siyanji-pet.json',
+              'android/all-pets-apk/app/src/main/assets/siyanji-spritesheet.webp',
+              'android/all-pets-apk/app/src/main/assets/nuannuan-pig-pet.json',
+              'android/all-pets-apk/app/src/main/assets/nuannuan-pig-spritesheet.webp',
+              'android/all-pets-apk/app/src/main/assets/rebellious-burger-king-pet.json',
+              'android/all-pets-apk/app/src/main/assets/rebellious-burger-king-spritesheet.webp',
+              'android/all-pets-apk/app/src/main/assets/koushui-ji-pet.json',
+              'android/all-pets-apk/app/src/main/assets/koushui-ji-spritesheet.webp',
+              'android/all-pets-apk/app/src/main/assets/chuanghuo-ji-pet.json',
+              'android/all-pets-apk/app/src/main/assets/chuanghuo-ji-spritesheet.webp',
+              'android/all-pets-apk/app/src/main/assets/mini-chieftain-chicken-pet.json',
+              'android/all-pets-apk/app/src/main/assets/mini-chieftain-chicken-spritesheet.webp',
+              'android/all-pets-apk/app/src/main/assets/gui-fei-ji-student-uniform-pixel-pet.json',
+              'android/all-pets-apk/app/src/main/assets/gui-fei-ji-student-uniform-pixel-spritesheet.webp',
+              'android/all-pets-apk/app/src/main/assets/nuannuanji-student-pig-pet.json',
+              'android/all-pets-apk/app/src/main/assets/nuannuanji-student-pig-spritesheet.webp',
+              'android/all-pets-apk/app/src/main/assets/siyanji-extra-actions.json',
+              'android/all-pets-apk/app/src/main/assets/siyanji-extra-actions.webp',
+              'android/all-pets-apk/app/src/main/assets/siyanji-long-actions.json',
+              'android/all-pets-apk/app/src/main/assets/siyanji-long-actions.webp'
+            ];
+            const missing = required.filter(entry => !fs.existsSync(path.join(tempDir, entry)));
+            if (missing.length) throw new Error(`Missing packaged files: ${missing.join(', ')}`);
+            const main = fs.readFileSync(path.join(tempDir, 'src/all-pets-main.js'), 'utf8');
+            if (!main.includes("process.platform === 'darwin' ? 'all-pets-icon.png' : 'all-pets-icon.ico'")) {
+              throw new Error('macOS runtime icon path is not packaged as expected.');
+            }
+            console.log('All-pets macOS app.asar checks passed.');
+          } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+          }
+          NODE
+
+      - name: Check packaged all-pets release surface
+        run: node scripts/check-release-surface.js --config package.all-pets.json --dist --dist-dir dist-all-pets
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dawanji-zongdongyuan-desktop-pet-macos-universal
+          path: |
+            dist-all-pets/大湾鸡总动员.dmg
+            dist-all-pets/大湾鸡总动员.zip
+
+      - name: Upload all-pets macOS assets to release
+        if: ${{ inputs.upload_release == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          mkdir -p release-assets
+          cp "dist-all-pets/大湾鸡总动员.dmg" "release-assets/Dawanji-Zongdongyuan-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
+          cp "dist-all-pets/大湾鸡总动员.zip" "release-assets/Dawanji-Zongdongyuan-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
           gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
 
   build-linux:

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self';"
+    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大湾鸡总动员</title>
+    <link rel="stylesheet" href="./all-pets-control.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>大湾鸡总动员</h1>
+          <p id="summary">正在读取状态...</p>
+        </div>
+        <div class="top-actions">
+          <button id="showAllButton" type="button">显示全部</button>
+          <button id="resetPositionsButton" type="button">重置队形</button>
+        </div>
+      </header>
+
+      <section class="grid">
+        <section class="panel roster-panel">
+          <div class="panel-head">
+            <h2>宠物队列</h2>
+            <div class="mini-actions">
+              <button id="targetAllButton" type="button">全选目标</button>
+              <button id="targetNoneButton" type="button">清空目标</button>
+            </div>
+          </div>
+          <div class="pet-table">
+            <div class="pet-table-head">
+              <span>宠物</span>
+              <span>显示</span>
+              <span>动作目标</span>
+              <span></span>
+            </div>
+            <div id="petRows"></div>
+          </div>
+        </section>
+
+        <section class="panel action-panel">
+          <div class="panel-head">
+            <h2>动作控制</h2>
+            <span id="actionStatus" class="status-text"></span>
+          </div>
+          <h3>基础动作</h3>
+          <div id="baseActions" class="button-grid"></div>
+          <h3>四眼鸡扩展动作</h3>
+          <div id="extraActions" class="button-grid dense"></div>
+          <h3>四眼鸡长动作</h3>
+          <div id="longActions" class="button-grid dense"></div>
+        </section>
+      </section>
+
+      <section class="panel settings-panel">
+        <h2>全局设置</h2>
+        <div class="settings-grid">
+          <label>
+            <span>缩放</span>
+            <select id="scaleSelect"></select>
+          </label>
+          <label>
+            <span>无互动难过时间</span>
+            <select id="inactivitySelect"></select>
+          </label>
+          <label class="check-row">
+            <input id="groupMoveCheckbox" type="checkbox">
+            <span>全选移动所有宠物</span>
+          </label>
+          <label class="check-row">
+            <input id="autoActionsCheckbox" type="checkbox">
+            <span>空闲自动随机动作</span>
+          </label>
+        </div>
+        <div class="footer-actions">
+          <button id="resetSettingsButton" type="button">恢复默认设置</button>
+          <button id="quitButton" type="button">退出</button>
+        </div>
+      </section>
+    </main>
+    <script src="./all-pets-control.js"></script>
+  </body>
+</html>
