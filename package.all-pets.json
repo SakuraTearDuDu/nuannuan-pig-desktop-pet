@@ -66,7 +66,7 @@
     "target": [
       "deb"
     ],
-    "icon": "build/all-pets-icon.png",
+    "icon": "build/all-pets-linux-icons",
     "category": "Utility",
     "maintainer": "SakuraTearDuDu",
     "artifactName": "Dawanji-Zongdongyuan-DesktopPet-v${version}-UOS-${arch}.${ext}"
