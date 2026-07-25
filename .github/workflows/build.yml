@@ -28,6 +28,7 @@ on:
           - all-pets-macos
           - all-pets-uos
           - chuanghuo-ji-macos
+          - dance-chicken-macos
           - gui-fei-ji-student-uniform-pixel-macos
           - mini-chieftain-chicken-macos
           - nuannuanji-student-pig-macos
@@ -748,6 +749,112 @@ jobs:
           mkdir -p release-assets
           cp "dist-nuannuanji-student-pig/暖暖鸡（学生小猪版）桌面宠物.dmg" "release-assets/NuannuanjiStudentPig-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
           cp "dist-nuannuanji-student-pig/暖暖鸡（学生小猪版）桌面宠物.zip" "release-assets/NuannuanjiStudentPig-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
+          gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
+
+  build-dance-chicken-macos:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'dance-chicken-macos' }}
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check Dance Chicken release surface
+        run: node scripts/check-release-surface.js --config package.iq-dance.json
+
+      - name: Package Dance Chicken macOS DMG and ZIP
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder --config package.iq-dance.json --mac dmg zip --universal --publish never
+
+      - name: Inspect Dance Chicken macOS packages
+        shell: bash
+        run: |
+          test -f "dist-iq-dance/跳舞鸡桌面宠物.dmg"
+          test -f "dist-iq-dance/跳舞鸡桌面宠物.zip"
+          hdiutil verify "dist-iq-dance/跳舞鸡桌面宠物.dmg"
+          tmp_dir="$(mktemp -d)"
+          ditto -x -k "dist-iq-dance/跳舞鸡桌面宠物.zip" "$tmp_dir"
+          test -d "$tmp_dir/跳舞鸡桌面宠物.app"
+          test -f "$tmp_dir/跳舞鸡桌面宠物.app/Contents/Info.plist"
+          test -f "$tmp_dir/跳舞鸡桌面宠物.app/Contents/Resources/icon.icns"
+          plutil -extract CFBundleName raw "$tmp_dir/跳舞鸡桌面宠物.app/Contents/Info.plist" | grep -Fx "跳舞鸡桌面宠物"
+
+          APP_ASAR="$tmp_dir/跳舞鸡桌面宠物.app/Contents/Resources/app.asar" node <<'NODE'
+          const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
+          const crypto = require('crypto');
+          const asar = require('@electron/asar');
+          const archive = process.env.APP_ASAR;
+          const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dance-chicken-mac-asar-'));
+          const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          try {
+            asar.extractAll(archive, tempDir);
+            const required = [
+              'package.json',
+              'src/preload.js',
+              'src/iq-dance-main.js',
+              'src/renderer/iq-dance.html',
+              'src/renderer/iq-dance-renderer.js',
+              'src/renderer/styles.css',
+              'assets/siyanji-long-actions.json',
+              'assets/siyanji-long-actions.webp',
+              'assets/dance-chicken-tray.png'
+            ];
+            const missing = required.filter(entry => !fs.existsSync(path.join(tempDir, entry)));
+            if (missing.length) throw new Error(`Missing packaged files: ${missing.join(', ')}`);
+            const pkg = JSON.parse(fs.readFileSync(path.join(tempDir, 'package.json'), 'utf8'));
+            if (pkg.name !== 'dance-chicken-desktop-pet') throw new Error(`Wrong package name: ${pkg.name}`);
+            if (pkg.productName !== '跳舞鸡桌面宠物') throw new Error(`Wrong productName: ${pkg.productName}`);
+            if (pkg.main !== 'src/iq-dance-main.js') throw new Error(`Wrong main: ${pkg.main}`);
+            const manifest = JSON.parse(fs.readFileSync(path.join(tempDir, 'assets/siyanji-long-actions.json'), 'utf8'));
+            const iqDance = Array.isArray(manifest.actions) ? manifest.actions.find(action => action.id === 'iq-dance') : null;
+            if (!iqDance || iqDance.frames !== 144 || iqDance.rowCount !== 6) throw new Error('IQ dance action manifest mismatch.');
+            const main = fs.readFileSync(path.join(tempDir, 'src/iq-dance-main.js'), 'utf8');
+            if (!main.includes('dance-chicken-tray.png') || !main.includes('hideDockIconOnMac')) {
+              throw new Error('macOS desktop-pet tray or Dock behavior is missing.');
+            }
+            const sourceSprite = path.join(process.cwd(), 'assets/siyanji-long-actions.webp');
+            const packagedSprite = path.join(tempDir, 'assets/siyanji-long-actions.webp');
+            if (hash(sourceSprite) !== hash(packagedSprite)) throw new Error('Packaged dance spritesheet hash mismatch.');
+            console.log('Dance Chicken macOS app.asar checks passed.');
+          } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+          }
+          NODE
+
+      - name: Check packaged Dance Chicken release surface
+        run: node scripts/check-release-surface.js --config package.iq-dance.json --dist --dist-dir dist-iq-dance
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dance-chicken-desktop-pet-macos-universal
+          path: |
+            dist-iq-dance/跳舞鸡桌面宠物.dmg
+            dist-iq-dance/跳舞鸡桌面宠物.zip
+
+      - name: Upload Dance Chicken macOS assets to release
+        if: ${{ inputs.upload_release == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          mkdir -p release-assets
+          cp "dist-iq-dance/跳舞鸡桌面宠物.dmg" "release-assets/DanceChicken-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
+          cp "dist-iq-dance/跳舞鸡桌面宠物.zip" "release-assets/DanceChicken-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
           gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
 
   build-all-pets-macos:
