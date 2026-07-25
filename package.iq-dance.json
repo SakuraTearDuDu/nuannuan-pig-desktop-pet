@@ -57,5 +57,18 @@
     "icon": "build/dance-chicken-icon.icns",
     "category": "public.app-category.entertainment",
     "identity": null
+  },
+  "linux": {
+    "target": [
+      "deb"
+    ],
+    "icon": "assets/dance-chicken-tray.png",
+    "category": "Utility",
+    "maintainer": "SakuraTearDuDu",
+    "artifactName": "DanceChicken-DesktopPet-v${version}-UOS-${arch}.${ext}"
+  },
+  "deb": {
+    "synopsis": "跳舞鸡 desktop pet",
+    "description": "跳舞鸡桌面宠物 is an Electron desktop pet for Windows, macOS, UOS, and Deepin."
   }
 }

@@ -29,6 +29,7 @@ on:
           - all-pets-uos
           - chuanghuo-ji-macos
           - dance-chicken-macos
+          - dance-chicken-uos
           - gui-fei-ji-student-uniform-pixel-macos
           - mini-chieftain-chicken-macos
           - nuannuanji-student-pig-macos
@@ -856,6 +857,143 @@ jobs:
           cp "dist-iq-dance/跳舞鸡桌面宠物.dmg" "release-assets/DanceChicken-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
           cp "dist-iq-dance/跳舞鸡桌面宠物.zip" "release-assets/DanceChicken-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
           gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
+
+  build-dance-chicken-uos:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'dance-chicken-uos' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - eb_arch: x64
+            deb_arch: amd64
+            file_arch: x86-64
+          - eb_arch: arm64
+            deb_arch: arm64
+            file_arch: ARM aarch64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check Dance Chicken release surface
+        run: node scripts/check-release-surface.js --config package.iq-dance.json
+
+      - name: Package Dance Chicken UOS DEB
+        run: npm run package:iq-dance:uos -- --${{ matrix.eb_arch }}
+
+      - name: Normalize UOS artifact name
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          mkdir -p release-assets
+          deb_file="$(find dist-iq-dance-uos -maxdepth 1 -name '*.deb' -print -quit)"
+          test -n "$deb_file"
+          cp "$deb_file" "release-assets/DanceChicken-DesktopPet-v${version}-UOS-${{ matrix.deb_arch }}.deb"
+
+      - name: Inspect Dance Chicken UOS package
+        shell: bash
+        run: |
+          deb_file="$(find release-assets -maxdepth 1 -name '*.deb' -print -quit)"
+          test -n "$deb_file"
+          dpkg-deb --info "$deb_file"
+          dpkg-deb --field "$deb_file" Package | grep -Fx "dance-chicken-desktop-pet"
+          dpkg-deb --field "$deb_file" Architecture | grep -Fx "${{ matrix.deb_arch }}"
+          dpkg-deb --field "$deb_file" Version | grep -Fx "$(node -p "require('./package.json').version")"
+
+          extract_dir="$(mktemp -d)"
+          dpkg-deb --extract "$deb_file" "$extract_dir"
+          desktop_file="$(find "$extract_dir/usr/share/applications" -type f -name '*.desktop' -print -quit)"
+          icon_file="$(find "$extract_dir/usr/share/icons" -type f -path '*/256x256/apps/*.png' -print -quit)"
+          app_asar="$(find "$extract_dir/opt" -type f -name app.asar -print -quit)"
+          app_root="$(dirname "$(dirname "$app_asar")")"
+          app_binary="$app_root/$(node -p "require('./package.iq-dance.json').extraMetadata.name")"
+          echo "desktop_file=$desktop_file"
+          echo "icon_file=$icon_file"
+          echo "app_asar=$app_asar"
+          echo "app_root=$app_root"
+          echo "app_binary=$app_binary"
+          test -n "$desktop_file"
+          test -n "$icon_file"
+          test -n "$app_asar"
+          test -n "$app_binary"
+          test -f "$desktop_file"
+          test -f "$icon_file"
+          test -f "$app_asar"
+          test -x "$app_binary"
+          grep -F "Name=跳舞鸡桌面宠物" "$desktop_file"
+          file "$app_binary" | grep -F "${{ matrix.file_arch }}"
+
+          APP_ASAR="$app_asar" node <<'NODE'
+          const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
+          const crypto = require('crypto');
+          const asar = require('@electron/asar');
+          const archive = process.env.APP_ASAR;
+          const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dance-chicken-uos-asar-'));
+          const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          try {
+            asar.extractAll(archive, tempDir);
+            const required = [
+              'package.json',
+              'src/preload.js',
+              'src/iq-dance-main.js',
+              'src/renderer/iq-dance.html',
+              'src/renderer/iq-dance-renderer.js',
+              'src/renderer/styles.css',
+              'assets/siyanji-long-actions.json',
+              'assets/siyanji-long-actions.webp',
+              'assets/dance-chicken-tray.png'
+            ];
+            const missing = required.filter(entry => !fs.existsSync(path.join(tempDir, entry)));
+            if (missing.length) throw new Error(`Missing packaged files: ${missing.join(', ')}`);
+            const pkg = JSON.parse(fs.readFileSync(path.join(tempDir, 'package.json'), 'utf8'));
+            if (pkg.name !== 'dance-chicken-desktop-pet') throw new Error(`Wrong package name: ${pkg.name}`);
+            if (pkg.productName !== '跳舞鸡桌面宠物') throw new Error(`Wrong productName: ${pkg.productName}`);
+            if (pkg.main !== 'src/iq-dance-main.js') throw new Error(`Wrong main: ${pkg.main}`);
+            const manifest = JSON.parse(fs.readFileSync(path.join(tempDir, 'assets/siyanji-long-actions.json'), 'utf8'));
+            const iqDance = Array.isArray(manifest.actions) ? manifest.actions.find(action => action.id === 'iq-dance') : null;
+            if (!iqDance || iqDance.frames !== 144 || iqDance.rowCount !== 6) throw new Error('IQ dance action manifest mismatch.');
+            const main = fs.readFileSync(path.join(tempDir, 'src/iq-dance-main.js'), 'utf8');
+            if (!main.includes('dance-chicken-tray.png')) {
+              throw new Error('Dance Chicken tray icon is missing from main process.');
+            }
+            const sourceSprite = path.join(process.cwd(), 'assets/siyanji-long-actions.webp');
+            const packagedSprite = path.join(tempDir, 'assets/siyanji-long-actions.webp');
+            if (hash(sourceSprite) !== hash(packagedSprite)) throw new Error('Packaged dance spritesheet hash mismatch.');
+            console.log('Dance Chicken UOS app.asar checks passed.');
+          } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+          }
+          NODE
+
+      - name: Check packaged Dance Chicken release surface
+        run: node scripts/check-release-surface.js --config package.iq-dance.json --dist --dist-dir dist-iq-dance-uos
+
+      - name: Upload UOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dance-chicken-desktop-pet-uos-${{ matrix.deb_arch }}
+          path: release-assets/*.deb
+
+      - name: Upload Dance Chicken UOS assets to release
+        if: ${{ inputs.upload_release == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: gh release upload "$RELEASE_TAG" release-assets/*.deb --repo "$GITHUB_REPOSITORY" --clobber
 
   build-all-pets-macos:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'all-pets-macos' }}

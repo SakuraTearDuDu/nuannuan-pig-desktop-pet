@@ -83,7 +83,10 @@
     "postpackage:linux": "npm run check:release-surface:dist",
     "prepackage:iq-dance:mac": "npm run check:release-surface -- --config package.iq-dance.json",
     "package:iq-dance:mac": "electron-builder --config package.iq-dance.json --mac dmg zip --universal --publish never",
-    "postpackage:iq-dance:mac": "npm run check:release-surface -- --config package.iq-dance.json --dist --dist-dir dist-iq-dance"
+    "postpackage:iq-dance:mac": "npm run check:release-surface -- --config package.iq-dance.json --dist --dist-dir dist-iq-dance",
+    "prepackage:iq-dance:uos": "npm run check:release-surface -- --config package.iq-dance.json",
+    "package:iq-dance:uos": "electron-builder --config package.iq-dance.json --linux deb --publish never --config.directories.output=dist-iq-dance-uos",
+    "postpackage:iq-dance:uos": "npm run check:release-surface -- --config package.iq-dance.json --dist --dist-dir dist-iq-dance-uos"
   },
   "devDependencies": {
     "@electron/asar": "^3.4.1",
