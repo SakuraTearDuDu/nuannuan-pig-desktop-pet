@@ -771,22 +771,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate Tiaowuji assets
+        run: node scripts/check-tiaowuji-assets.js
+
       - name: Check Dance Chicken release surface
-        run: node scripts/check-release-surface.js --config package.iq-dance.json
+        run: node scripts/check-release-surface.js --config package.tiaowuji.json
 
       - name: Package Dance Chicken macOS DMG and ZIP
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npx electron-builder --config package.iq-dance.json --mac dmg zip --universal --publish never
+        run: npm run package:tiaowuji:mac
 
       - name: Inspect Dance Chicken macOS packages
         shell: bash
         run: |
-          test -f "dist-iq-dance/跳舞鸡桌面宠物.dmg"
-          test -f "dist-iq-dance/跳舞鸡桌面宠物.zip"
-          hdiutil verify "dist-iq-dance/跳舞鸡桌面宠物.dmg"
+          test -f "dist-tiaowuji/跳舞鸡桌面宠物.dmg"
+          test -f "dist-tiaowuji/跳舞鸡桌面宠物.zip"
+          hdiutil verify "dist-tiaowuji/跳舞鸡桌面宠物.dmg"
           tmp_dir="$(mktemp -d)"
-          ditto -x -k "dist-iq-dance/跳舞鸡桌面宠物.zip" "$tmp_dir"
+          ditto -x -k "dist-tiaowuji/跳舞鸡桌面宠物.zip" "$tmp_dir"
           test -d "$tmp_dir/跳舞鸡桌面宠物.app"
           test -f "$tmp_dir/跳舞鸡桌面宠物.app/Contents/Info.plist"
           test -f "$tmp_dir/跳舞鸡桌面宠物.app/Contents/Resources/icon.icns"
@@ -799,53 +802,59 @@ jobs:
           const crypto = require('crypto');
           const asar = require('@electron/asar');
           const archive = process.env.APP_ASAR;
-          const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dance-chicken-mac-asar-'));
+          const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tiaowuji-mac-asar-'));
           const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
           try {
             asar.extractAll(archive, tempDir);
             const required = [
               'package.json',
               'src/preload.js',
-              'src/iq-dance-main.js',
-              'src/renderer/iq-dance.html',
-              'src/renderer/iq-dance-renderer.js',
+              'src/standard-pet-main.js',
+              'src/tiaowuji-main.js',
+              'src/renderer/tiaowuji.html',
+              'src/renderer/standard-pet-renderer.js',
+              'src/renderer/inactivity-settings.html',
+              'src/renderer/inactivity-settings.css',
+              'src/renderer/inactivity-settings.js',
               'src/renderer/styles.css',
-              'assets/siyanji-long-actions.json',
-              'assets/siyanji-long-actions.webp',
-              'assets/dance-chicken-tray.png'
+              'assets/tiaowuji/pet.json',
+              'assets/tiaowuji/spritesheet.webp',
+              'assets/tiaowuji/tray.png'
             ];
             const missing = required.filter(entry => !fs.existsSync(path.join(tempDir, entry)));
             if (missing.length) throw new Error(`Missing packaged files: ${missing.join(', ')}`);
             const pkg = JSON.parse(fs.readFileSync(path.join(tempDir, 'package.json'), 'utf8'));
-            if (pkg.name !== 'dance-chicken-desktop-pet') throw new Error(`Wrong package name: ${pkg.name}`);
+            if (pkg.name !== 'tiaowuji-desktop-pet') throw new Error(`Wrong package name: ${pkg.name}`);
             if (pkg.productName !== '跳舞鸡桌面宠物') throw new Error(`Wrong productName: ${pkg.productName}`);
-            if (pkg.main !== 'src/iq-dance-main.js') throw new Error(`Wrong main: ${pkg.main}`);
-            const manifest = JSON.parse(fs.readFileSync(path.join(tempDir, 'assets/siyanji-long-actions.json'), 'utf8'));
-            const iqDance = Array.isArray(manifest.actions) ? manifest.actions.find(action => action.id === 'iq-dance') : null;
-            if (!iqDance || iqDance.frames !== 144 || iqDance.rowCount !== 6) throw new Error('IQ dance action manifest mismatch.');
-            const main = fs.readFileSync(path.join(tempDir, 'src/iq-dance-main.js'), 'utf8');
-            if (!main.includes('dance-chicken-tray.png') || !main.includes('hideDockIconOnMac')) {
-              throw new Error('macOS desktop-pet tray or Dock behavior is missing.');
+            if (pkg.main !== 'src/tiaowuji-main.js') throw new Error(`Wrong main: ${pkg.main}`);
+            const pet = JSON.parse(fs.readFileSync(path.join(tempDir, 'assets/tiaowuji/pet.json'), 'utf8'));
+            if (pet.id !== 'tiaowuji' || pet.displayName !== '跳舞鸡' || pet.spriteVersionNumber !== 2) {
+              throw new Error(`Wrong pet metadata: ${JSON.stringify(pet)}`);
             }
-            const sourceSprite = path.join(process.cwd(), 'assets/siyanji-long-actions.webp');
-            const packagedSprite = path.join(tempDir, 'assets/siyanji-long-actions.webp');
-            if (hash(sourceSprite) !== hash(packagedSprite)) throw new Error('Packaged dance spritesheet hash mismatch.');
-            console.log('Dance Chicken macOS app.asar checks passed.');
+            const main = fs.readFileSync(path.join(tempDir, 'src/tiaowuji-main.js'), 'utf8');
+            const standardMain = fs.readFileSync(path.join(tempDir, 'src/standard-pet-main.js'), 'utf8');
+            if (!main.includes("petId: 'tiaowuji'") || !standardMain.includes('hideDockIconOnMac')) {
+              throw new Error('Tiaowuji main process or macOS Dock behavior is missing.');
+            }
+            const sourceSprite = path.join(process.cwd(), 'assets/tiaowuji/spritesheet.webp');
+            const packagedSprite = path.join(tempDir, 'assets/tiaowuji/spritesheet.webp');
+            if (hash(sourceSprite) !== hash(packagedSprite)) throw new Error('Packaged tiaowuji spritesheet hash mismatch.');
+            console.log('Tiaowuji macOS app.asar checks passed.');
           } finally {
             fs.rmSync(tempDir, { recursive: true, force: true });
           }
           NODE
 
       - name: Check packaged Dance Chicken release surface
-        run: node scripts/check-release-surface.js --config package.iq-dance.json --dist --dist-dir dist-iq-dance
+        run: node scripts/check-release-surface.js --config package.tiaowuji.json --dist --dist-dir dist-tiaowuji
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: dance-chicken-desktop-pet-macos-universal
           path: |
-            dist-iq-dance/跳舞鸡桌面宠物.dmg
-            dist-iq-dance/跳舞鸡桌面宠物.zip
+            dist-tiaowuji/跳舞鸡桌面宠物.dmg
+            dist-tiaowuji/跳舞鸡桌面宠物.zip
 
       - name: Upload Dance Chicken macOS assets to release
         if: ${{ inputs.upload_release == true }}
@@ -854,8 +863,8 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           mkdir -p release-assets
-          cp "dist-iq-dance/跳舞鸡桌面宠物.dmg" "release-assets/DanceChicken-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
-          cp "dist-iq-dance/跳舞鸡桌面宠物.zip" "release-assets/DanceChicken-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
+          cp "dist-tiaowuji/跳舞鸡桌面宠物.dmg" "release-assets/DanceChicken-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
+          cp "dist-tiaowuji/跳舞鸡桌面宠物.zip" "release-assets/DanceChicken-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
           gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
 
   build-dance-chicken-uos:

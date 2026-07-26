@@ -1,0 +1,63 @@
+{
+  "appId": "com.sakurateardudu.tiaowuji.desktop",
+  "productName": "跳舞鸡桌面宠物",
+  "artifactName": "跳舞鸡桌面宠物.${ext}",
+  "extraMetadata": {
+    "name": "tiaowuji-desktop-pet",
+    "productName": "跳舞鸡桌面宠物",
+    "author": "跳舞鸡",
+    "description": "跳舞鸡桌面宠物 packaged with Electron.",
+    "main": "src/tiaowuji-main.js"
+  },
+  "files": [
+    "package.json",
+    "LICENSE",
+    "src/preload.js",
+    "src/standard-pet-main.js",
+    "src/tiaowuji-main.js",
+    "src/renderer/tiaowuji.html",
+    "src/renderer/standard-pet-renderer.js",
+    "src/renderer/inactivity-settings.html",
+    "src/renderer/inactivity-settings.css",
+    "src/renderer/inactivity-settings.js",
+    "src/renderer/styles.css",
+    "assets/tiaowuji/**/*"
+  ],
+  "directories": {
+    "output": "dist-tiaowuji",
+    "buildResources": "build"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "build/tiaowuji-icon.ico"
+  },
+  "portable": {
+    "artifactName": "跳舞鸡桌面宠物.${ext}"
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "universal"
+        ]
+      },
+      {
+        "target": "zip",
+        "arch": [
+          "universal"
+        ]
+      }
+    ],
+    "icon": "build/tiaowuji-icon.icns",
+    "category": "public.app-category.entertainment",
+    "identity": null
+  }
+}
