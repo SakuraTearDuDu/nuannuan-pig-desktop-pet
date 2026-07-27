@@ -27,6 +27,7 @@ on:
           - all
           - all-pets-macos
           - all-pets-uos
+          - caishen-ji-macos
           - chuanghuo-ji-macos
           - dance-chicken-macos
           - dance-chicken-uos
@@ -136,6 +137,134 @@ jobs:
           cp "dist/四眼鸡桌面宠物.dmg" "release-assets/Siyanji-DesktopPet-${RELEASE_TAG}-mac-universal.dmg"
           cp "dist/四眼鸡桌面宠物.zip" "release-assets/Siyanji-DesktopPet-${RELEASE_TAG}-mac-universal.zip"
           gh release upload "$RELEASE_TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
+
+  build-caishen-ji-macos:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'caishen-ji-macos' }}
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install asset check dependencies
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install pillow
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Validate Caishen Ji assets and release surface
+        run: |
+          node scripts/check-caishen-ji-assets.js
+          node scripts/check-release-surface.js --config package.caishen-ji.json
+
+      - name: Package Caishen Ji macOS universal DMG and ZIP
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder --config package.caishen-ji.json --mac dmg zip --universal --publish never
+
+      - name: Inspect Caishen Ji macOS packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "dist-caishen-ji/财神鸡桌面宠物.dmg"
+          test -f "dist-caishen-ji/财神鸡桌面宠物.zip"
+          hdiutil verify "dist-caishen-ji/财神鸡桌面宠物.dmg"
+
+          tmp_dir="$(mktemp -d)"
+          ditto -x -k "dist-caishen-ji/财神鸡桌面宠物.zip" "$tmp_dir"
+          app="$tmp_dir/财神鸡桌面宠物.app"
+          plist="$app/Contents/Info.plist"
+          test -d "$app"
+          test -f "$plist"
+          plutil -extract CFBundleName raw "$plist" | grep -Fx "财神鸡桌面宠物"
+          plutil -extract CFBundleIdentifier raw "$plist" | grep -Fx "com.sakurateardudu.caishenji.desktop"
+          plutil -extract CFBundleShortVersionString raw "$plist" | grep -Fx "2.0.0"
+
+          executable="$(plutil -extract CFBundleExecutable raw "$plist")"
+          binary="$app/Contents/MacOS/$executable"
+          test -x "$binary"
+          file "$binary"
+          archs="$(lipo -archs "$binary")"
+          echo "architectures=$archs"
+          grep -qw "x86_64" <<<"$archs"
+          grep -qw "arm64" <<<"$archs"
+
+          if codesign -dvv "$app" >codesign-details.txt 2>&1; then
+            cat codesign-details.txt
+            codesign --verify --deep --strict "$app"
+            echo "signing_state=signed-or-ad-hoc"
+          else
+            cat codesign-details.txt
+            echo "signing_state=unsigned"
+          fi
+
+          APP_ASAR="$app/Contents/Resources/app.asar" node <<'NODE'
+          const crypto = require('crypto');
+          const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
+          const asar = require('@electron/asar');
+
+          const archive = process.env.APP_ASAR;
+          const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'caishen-ji-mac-asar-'));
+          const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          try {
+            asar.extractAll(archive, tempDir);
+            const required = [
+              'src/preload.js',
+              'src/standard-pet-main.js',
+              'src/caishen-ji-main.js',
+              'src/renderer/caishen-ji.html',
+              'src/renderer/standard-pet-renderer.js',
+              'src/renderer/inactivity-settings.html',
+              'src/renderer/inactivity-settings.css',
+              'src/renderer/inactivity-settings.js',
+              'src/renderer/styles.css',
+              'assets/caishen-ji/pet.json',
+              'assets/caishen-ji/spritesheet.webp',
+              'assets/caishen-ji/tray.png'
+            ];
+            const missing = required.filter(entry => !fs.existsSync(path.join(tempDir, entry)));
+            if (missing.length) throw new Error(`Missing packaged files: ${missing.join(', ')}`);
+
+            const packageJson = JSON.parse(fs.readFileSync(path.join(tempDir, 'package.json'), 'utf8'));
+            const pet = JSON.parse(fs.readFileSync(path.join(tempDir, 'assets/caishen-ji/pet.json'), 'utf8'));
+            if (packageJson.main !== 'src/caishen-ji-main.js') throw new Error(`Wrong main: ${packageJson.main}`);
+            if (packageJson.productName !== '财神鸡桌面宠物') throw new Error(`Wrong productName: ${packageJson.productName}`);
+            if (pet.id !== 'caishen-ji') throw new Error(`Wrong pet id: ${pet.id}`);
+            if (pet.spriteVersionNumber !== 2) throw new Error(`Wrong spriteVersionNumber: ${pet.spriteVersionNumber}`);
+
+            const sourceSprite = path.join(process.cwd(), 'assets/caishen-ji/spritesheet.webp');
+            const packagedSprite = path.join(tempDir, 'assets/caishen-ji/spritesheet.webp');
+            if (hash(sourceSprite) !== hash(packagedSprite)) throw new Error('Packaged spritesheet hash mismatch.');
+            console.log(`sprite_sha256=${hash(packagedSprite)}`);
+            console.log('Caishen Ji macOS app.asar checks passed.');
+          } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+          }
+          NODE
+
+      - name: Check packaged Caishen Ji release surface
+        run: node scripts/check-release-surface.js --config package.caishen-ji.json --dist --dist-dir dist-caishen-ji
+
+      - name: Upload Caishen Ji macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: caishen-ji-desktop-pet-macos-universal
+          path: |
+            dist-caishen-ji/财神鸡桌面宠物.dmg
+            dist-caishen-ji/财神鸡桌面宠物.zip
 
   build-chuanghuo-ji-macos:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'chuanghuo-ji-macos' }}

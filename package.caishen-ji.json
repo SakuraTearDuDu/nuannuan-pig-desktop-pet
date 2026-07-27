@@ -1,0 +1,64 @@
+{
+  "appId": "com.sakurateardudu.caishenji.desktop",
+  "productName": "财神鸡桌面宠物",
+  "artifactName": "财神鸡桌面宠物.${ext}",
+  "extraMetadata": {
+    "name": "caishen-ji-desktop-pet",
+    "productName": "财神鸡桌面宠物",
+    "author": "财神鸡",
+    "description": "财神鸡桌面宠物 packaged with Electron.",
+    "main": "src/caishen-ji-main.js"
+  },
+  "files": [
+    "package.json",
+    "LICENSE",
+    "src/preload.js",
+    "src/standard-pet-main.js",
+    "src/caishen-ji-main.js",
+    "src/renderer/caishen-ji.html",
+    "src/renderer/standard-pet-renderer.js",
+    "src/renderer/inactivity-settings.html",
+    "src/renderer/inactivity-settings.css",
+    "src/renderer/inactivity-settings.js",
+    "src/renderer/styles.css",
+    "assets/caishen-ji/**/*",
+    "build/caishen-ji-icon.png"
+  ],
+  "directories": {
+    "output": "dist-caishen-ji",
+    "buildResources": "build"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "build/caishen-ji-icon.ico"
+  },
+  "portable": {
+    "artifactName": "财神鸡桌面宠物.${ext}"
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "universal"
+        ]
+      },
+      {
+        "target": "zip",
+        "arch": [
+          "universal"
+        ]
+      }
+    ],
+    "icon": "build/caishen-ji-icon.icns",
+    "category": "public.app-category.entertainment",
+    "identity": null
+  }
+}

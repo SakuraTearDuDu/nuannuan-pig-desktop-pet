@@ -204,7 +204,11 @@ function createStandardPetApp(options) {
 
   function normalizeBounds(bounds) {
     if (!bounds || typeof bounds.x !== 'number' || typeof bounds.y !== 'number') {
-      return defaultBounds(settings.scale);
+      return {
+        ...defaultBounds(settings.scale),
+        width: CELL_WIDTH * settings.scale,
+        height: CELL_HEIGHT * settings.scale
+      };
     }
     return {
       x: Math.round(bounds.x),

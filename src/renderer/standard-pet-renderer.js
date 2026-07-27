@@ -5,6 +5,7 @@ const SPRITESHEET_SRC = `../../assets/${PET_ID}/spritesheet.webp`;
 const AUTO_ACTION_MIN_DELAY = 25_000;
 const AUTO_ACTION_MAX_DELAY = 45_000;
 const AUTO_ACTION_RETRY_DELAY = 5_000;
+const SINGLE_CLICK_DELAY_MS = 250;
 const DEFAULT_INACTIVITY_SAD_TIMEOUT_MS = 5 * 60 * 1000;
 const INACTIVITY_SAD_REACTION_MS = 2200;
 const AUTO_ACTIONS = [
@@ -50,6 +51,7 @@ let settings = {
 let animationStarted = false;
 let autoActionTimer = null;
 let inactivitySadTimer = null;
+let singleClickTimer = null;
 let lastUserInteractionAt = performance.now();
 
 ctx.imageSmoothingEnabled = false;
@@ -91,6 +93,13 @@ function clearInactivitySadTimer() {
   if (inactivitySadTimer) {
     window.clearTimeout(inactivitySadTimer);
     inactivitySadTimer = null;
+  }
+}
+
+function clearSingleClickTimer() {
+  if (singleClickTimer) {
+    window.clearTimeout(singleClickTimer);
+    singleClickTimer = null;
   }
 }
 
@@ -223,6 +232,7 @@ canvas.addEventListener('pointerdown', async event => {
   }
 
   markUserInteraction();
+  clearSingleClickTimer();
   dragging = true;
   pointerDownAt = performance.now();
   lastPointer = pointFromEvent(event);
@@ -271,11 +281,14 @@ async function finishDrag(event) {
     // Pointer capture may already be gone when the window loses focus.
   }
 
-  await window.duduPet.endDrag();
+  const endDragPromise = window.duduPet.endDrag();
   const shortPress = performance.now() - pointerDownAt < 220;
   const wasDragged = dragTravel > 12;
   if (shortPress && !wasDragged) {
-    setPreferredState('waving', 'idle', 1100);
+    singleClickTimer = window.setTimeout(() => {
+      singleClickTimer = null;
+      setPreferredState('waving', 'idle', 1100);
+    }, SINGLE_CLICK_DELAY_MS);
   } else if (wasDragged) {
     setState('idle', 600);
   } else {
@@ -286,12 +299,14 @@ async function finishDrag(event) {
   dragDirectionState = 'running';
   markUserInteraction();
   resetAutoActionTimer();
+  await endDragPromise;
 }
 
 canvas.addEventListener('pointerup', finishDrag);
 canvas.addEventListener('pointercancel', finishDrag);
 
 canvas.addEventListener('dblclick', () => {
+  clearSingleClickTimer();
   markUserInteraction();
   setState('jumping', 950);
 });
