@@ -28,6 +28,7 @@ on:
           - all-pets-macos
           - all-pets-uos
           - caishen-ji-macos
+          - caishen-ji-uos
           - chuanghuo-ji-macos
           - dance-chicken-macos
           - dance-chicken-uos
@@ -264,6 +265,145 @@ jobs:
           path: |
             dist-caishen-ji/财神鸡桌面宠物.dmg
             dist-caishen-ji/财神鸡桌面宠物.zip
+
+  build-caishen-ji-uos:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'caishen-ji-uos' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - eb_arch: x64
+            deb_arch: amd64
+            file_arch: x86-64
+          - eb_arch: arm64
+            deb_arch: arm64
+            file_arch: ARM aarch64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install asset check dependencies
+        run: python3 -m pip install pillow
+
+      - name: Validate Caishen Ji assets and release surface
+        run: |
+          node scripts/check-caishen-ji-assets.js
+          node scripts/check-release-surface.js --config package.caishen-ji.json
+
+      - name: Package Caishen Ji UOS DEB
+        run: npx electron-builder --config package.caishen-ji.json --linux deb --${{ matrix.eb_arch }} --publish never --config.directories.output=dist-caishen-ji-uos
+
+      - name: Normalize UOS artifact name
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          mkdir -p release-assets
+          deb_file="$(find dist-caishen-ji-uos -maxdepth 1 -name '*.deb' -print -quit)"
+          test -n "$deb_file"
+          cp "$deb_file" "release-assets/CaishenJi-DesktopPet-v${version}-UOS-${{ matrix.deb_arch }}.deb"
+
+      - name: Inspect Caishen Ji UOS package
+        shell: bash
+        run: |
+          set -euo pipefail
+          deb_file="$(find release-assets -maxdepth 1 -name '*.deb' -print -quit)"
+          test -n "$deb_file"
+          dpkg-deb --info "$deb_file"
+          dpkg-deb --field "$deb_file" Package | grep -Fx "caishen-ji-desktop-pet"
+          dpkg-deb --field "$deb_file" Architecture | grep -Fx "${{ matrix.deb_arch }}"
+          dpkg-deb --field "$deb_file" Version | grep -Fx "$(node -p "require('./package.json').version")"
+
+          extract_dir="$(mktemp -d)"
+          dpkg-deb --extract "$deb_file" "$extract_dir"
+          desktop_file="$(find "$extract_dir/usr/share/applications" -type f -name '*.desktop' -print -quit)"
+          icon_file="$(find "$extract_dir/usr/share/icons" -type f -name '*.png' -print -quit)"
+          app_asar="$(find "$extract_dir/opt" -type f -name app.asar -print -quit)"
+          app_root="$(dirname "$(dirname "$app_asar")")"
+          app_binary="$app_root/$(node -p "require('./package.caishen-ji.json').extraMetadata.name")"
+          echo "desktop_file=$desktop_file"
+          echo "icon_file=$icon_file"
+          echo "app_asar=$app_asar"
+          echo "app_binary=$app_binary"
+          test -f "$desktop_file"
+          test -f "$icon_file"
+          test -f "$app_asar"
+          test -x "$app_binary"
+          grep -F "Name=财神鸡桌面宠物" "$desktop_file"
+          file "$app_binary" | grep -F "${{ matrix.file_arch }}"
+
+          APP_ASAR="$app_asar" node <<'NODE'
+          const crypto = require('crypto');
+          const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
+          const asar = require('@electron/asar');
+
+          const archive = process.env.APP_ASAR;
+          const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'caishen-ji-uos-asar-'));
+          const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          try {
+            asar.extractAll(archive, tempDir);
+            const required = [
+              'package.json',
+              'src/preload.js',
+              'src/standard-pet-main.js',
+              'src/caishen-ji-main.js',
+              'src/renderer/caishen-ji.html',
+              'src/renderer/standard-pet-renderer.js',
+              'src/renderer/inactivity-settings.html',
+              'src/renderer/inactivity-settings.css',
+              'src/renderer/inactivity-settings.js',
+              'src/renderer/styles.css',
+              'assets/caishen-ji/pet.json',
+              'assets/caishen-ji/spritesheet.webp',
+              'assets/caishen-ji/tray.png'
+            ];
+            const missing = required.filter(entry => !fs.existsSync(path.join(tempDir, entry)));
+            if (missing.length) throw new Error(`Missing packaged files: ${missing.join(', ')}`);
+
+            const pkg = JSON.parse(fs.readFileSync(path.join(tempDir, 'package.json'), 'utf8'));
+            const pet = JSON.parse(fs.readFileSync(path.join(tempDir, 'assets/caishen-ji/pet.json'), 'utf8'));
+            if (pkg.name !== 'caishen-ji-desktop-pet') throw new Error(`Wrong package name: ${pkg.name}`);
+            if (pkg.productName !== '财神鸡桌面宠物') throw new Error(`Wrong productName: ${pkg.productName}`);
+            if (pkg.main !== 'src/caishen-ji-main.js') throw new Error(`Wrong main: ${pkg.main}`);
+            if (pet.id !== 'caishen-ji') throw new Error(`Wrong pet id: ${pet.id}`);
+            if (pet.spriteVersionNumber !== 2) throw new Error(`Wrong spriteVersionNumber: ${pet.spriteVersionNumber}`);
+
+            const sourceSprite = path.join(process.cwd(), 'assets/caishen-ji/spritesheet.webp');
+            const packagedSprite = path.join(tempDir, 'assets/caishen-ji/spritesheet.webp');
+            if (hash(sourceSprite) !== hash(packagedSprite)) throw new Error('Packaged spritesheet hash mismatch.');
+            console.log(`sprite_sha256=${hash(packagedSprite)}`);
+            console.log('Caishen Ji UOS app.asar checks passed.');
+          } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+          }
+          NODE
+
+          if [[ "${{ matrix.deb_arch }}" == "amd64" ]]; then
+            xvfb-run -a env CAISHEN_JI_PET_SMOKE_TEST=1 "$app_binary" --no-sandbox 2>&1 | tee smoke.log
+            grep -F "CAISHEN_JI_PET_SMOKE_TEST_LOADED" smoke.log
+            grep -F "CAISHEN_JI_PET_SMOKE_TEST_READY" smoke.log
+          fi
+
+      - name: Check packaged Caishen Ji release surface
+        run: node scripts/check-release-surface.js --config package.caishen-ji.json --dist --dist-dir dist-caishen-ji-uos
+
+      - name: Upload Caishen Ji UOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: caishen-ji-desktop-pet-uos-${{ matrix.deb_arch }}
+          path: release-assets/*.deb
 
   build-chuanghuo-ji-macos:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_pet == 'chuanghuo-ji-macos' }}

@@ -60,5 +60,18 @@
     "icon": "build/caishen-ji-icon.icns",
     "category": "public.app-category.entertainment",
     "identity": null
+  },
+  "linux": {
+    "target": [
+      "deb"
+    ],
+    "icon": "assets/caishen-ji/tray.png",
+    "category": "Utility",
+    "maintainer": "SakuraTearDuDu",
+    "artifactName": "CaishenJi-DesktopPet-v${version}-UOS-${arch}.${ext}"
+  },
+  "deb": {
+    "synopsis": "财神鸡 desktop pet",
+    "description": "财神鸡桌面宠物 is an Electron desktop pet for Windows, macOS, Linux, UOS, and Deepin."
   }
 }
