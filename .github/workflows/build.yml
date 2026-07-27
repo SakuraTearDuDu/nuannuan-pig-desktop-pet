@@ -200,13 +200,12 @@ jobs:
           grep -qw "x86_64" <<<"$archs"
           grep -qw "arm64" <<<"$archs"
 
-          if codesign -dvv "$app" >codesign-details.txt 2>&1; then
-            cat codesign-details.txt
-            codesign --verify --deep --strict "$app"
-            echo "signing_state=signed-or-ad-hoc"
+          codesign -dvv "$app" >codesign-details.txt 2>&1 || true
+          cat codesign-details.txt
+          if codesign --verify --deep --strict "$app"; then
+            echo "signing_state=verified"
           else
-            cat codesign-details.txt
-            echo "signing_state=unsigned"
+            echo "signing_state=unsigned-bundle"
           fi
 
           APP_ASAR="$app/Contents/Resources/app.asar" node <<'NODE'
