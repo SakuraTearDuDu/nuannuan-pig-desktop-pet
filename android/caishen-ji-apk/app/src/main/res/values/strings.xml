@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">财神鸡悬浮宠物</string>
+    <string name="notification_title">财神鸡正在陪伴你</string>
+    <string name="notification_text">点击回到控制页，可手动触发动作和调整宠物设置。</string>
+</resources>
